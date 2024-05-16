@@ -1,4 +1,4 @@
-## Prepare the environement
+## Local dev environment (useful for development)
 
 ### Set environement variables
 `CLIENT_ID` and `CLIENT_SECRET`correspond to the credentials for the service
@@ -14,11 +14,26 @@ https://portal.slices-sc.eu/oauth/authorize)
 
 ### Get Dependencies
 ```
-go get core/token
-go mod download github.com/gorilla/mux
+ go get -d -v .
 ```
 
-## Start the backend
+### Start the backend
 ```
 go run main.go 
 ```
+
+## Docker environement
+
+Build the image
+
+ ```
+ docker build -t slices-backend -f Dockerfile .
+ ```
+
+ Define environment variables mentionned above in an variable list (e.g.,
+ `env.list`) then run the 
+
+ ```
+ docker run --env-file env.list --rm -d -p 8008:8008  slices-backend
+ ```
+
