@@ -1,0 +1,43 @@
+openapi: 3.0.1
+info:
+  title: SLICES-backend
+  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
+  version: 0.1.0
+servers:
+  - url: http://localhost:8008/
+    description: Test server
+paths:
+  /token:
+    get:
+      summary: Generate and return an JWT API token
+      description: Return the JWT that can be used to intereact with the API.
+      responses:
+        '200':    # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Token'
+  /logout:
+    get:
+      summary: Logout the user
+      description: Logout the user
+      responses:
+        '200':    # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+components:
+  schemas:
+    Token:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: JWT API token
+    Empty:
+      type: object
