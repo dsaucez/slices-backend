@@ -1,11 +1,11 @@
 openapi: 3.0.1
 info:
   title: SLICES-backend
-  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
+  description: Backend server to manage the post-5G blueprint
   version: 0.1.0
 servers:
   - url: http://localhost:8008/
-    description: Test server
+    description: Dev server
 
 paths:
   /token:
@@ -19,6 +19,7 @@ paths:
             application/json:
               schema: 
                 $ref: '#/components/schemas/token'
+
   /logout:
     get:
       summary: Logout the user
@@ -35,6 +36,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Empty'
+
   /core/:
     post:
       summary: Create a core
@@ -73,7 +75,7 @@ paths:
         '200':    # status code
           description: A JSON array of user names
           content:
-            application/json:
+            application/yaml:
               schema:
                 $ref: '#/components/schemas/Core'
 
@@ -176,7 +178,7 @@ components:
     mcc:
       type: string
       description: MCC
-      example: "00101"
+      example: "001"
 
     mnc:
       type: string
@@ -213,7 +215,7 @@ components:
 
     region_id:
       type: string
-      example: ""
+      example: "01"
 
     set_id:
       type: string
@@ -252,8 +254,16 @@ components:
     dnnInfo:
       type: object
       properties:
-        dnn:
+        dnn: 
           $ref: '#/components/schemas/dnn'
+        pdu_session_type:
+          type: string
+          enum:
+            - IPv4
+            - IPV4V6
+            - IPv6
+        ipv4_subnet:
+          $ref: "#/components/schemas/ipsubnet"
 
     sNssaiSmfInfo:
       type: object
@@ -264,7 +274,10 @@ components:
         dnnSmfInfoList:
           type: array
           items:
-            $ref: '#/components/schemas/dnnInfo'
+            type: object
+            properties:
+              dnn:
+                $ref: '#/components/schemas/dnn'
             uniqueItems: true
 
     sNssaiSmfInfoList:
@@ -301,6 +314,11 @@ components:
         qos_profile:
           $ref: "#/components/schemas/qos_profile"
 
+    local_subscription_infos_list:
+      type: array
+      items:
+        $ref: '#/components/schemas/local_subscription_infos'
+
     sNssaiUpfInfo:
       type: object
       properties:
@@ -310,7 +328,10 @@ components:
         dnnUpfInfoList:
           type: array
           items:
-            $ref: '#/components/schemas/dnnInfo'
+            type: object
+            properties:
+              dnn:
+                $ref: '#/components/schemas/dnn'
             uniqueItems: true
 
     sNssaiUpfInfoList:
@@ -318,7 +339,7 @@ components:
       items:
         $ref: '#/components/schemas/sNssaiUpfInfo'
 
-    plmn_support_list:
+    plmn_support:
       type: object
       properties:
         mcc:
@@ -336,7 +357,7 @@ components:
             $ref: '#/components/schemas/nssai'
           uniqueItems: true
 
-    served_guami_list:
+    served_guami:
       type: object
       properties:
         mcc:
@@ -355,35 +376,20 @@ components:
           $ref: '#/components/schemas/amf_pointer'
           required: true
 
+    Slice:
+      type: object
+      properties:
+        snssai:
+          $ref: '#/components/schemas/nssai'
+        dnns:
+          description: DNNs that are supported by the slice
+          type: array
+          items:
+            $ref: '#/components/schemas/dnn'
+        qos_profile:
+          $ref: '#/components/schemas/qos_profile'
+
     # == API objects ===========================================================
-    CoreParams:
-      type: object
-      required:
-        - mcc
-        - mnc
-        - tac
-      properties:
-        mcc:
-          $ref: '#/components/schemas/mcc'
-        mnc:
-          $ref: '#/components/schemas/mnc'
-        tac:
-          $ref: '#/components/schemas/tac'
-        upf:
-          type: boolean
-          default: false
-          description: Is the UPF provided by the core service
-    
-    Core:
-      type: object
-      properties:
-        uuid:
-          $ref: '#/components/schemas/uuid'
-        parameters:
-          $ref: '#/components/schemas/CoreParams'
-        network_functions:
-          $ref: '#/components/schemas/NetworkFunctions'
-    
     NetworkFunctions:
       type: object
       required:
@@ -406,6 +412,41 @@ components:
             ipaddr:
               $ref: '#/components/schemas/ipaddr'
     
+
+
+    CoreParams:
+      type: object
+      required:
+        - mcc
+        - mnc
+        - tac
+      properties:
+        mcc:
+          $ref: '#/components/schemas/mcc'
+        mnc:
+          $ref: '#/components/schemas/mnc'
+        tac:
+          $ref: '#/components/schemas/tac'
+        dnns:
+          description: DNNs supported by the core
+          $ref: "#/components/schemas/Dnns"
+        slices:
+          description: Slices implemented in the core
+          type: array
+          items:
+            $ref: "#/components/schemas/Slice"
+    
+    Core:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        parameters:
+          $ref: '#/components/schemas/CoreParams'
+          required: true
+        network_functions:
+          $ref: '#/components/schemas/NetworkFunctions'
+        
     UE:
       description: User Equipment
       type: object
@@ -429,7 +470,30 @@ components:
           type: string
           example: "98703558a143aa00a69331391e26c4a7"
 
-    Upf:
+    Amf:    # Validated
+      type: object
+      properties:
+        served_guami_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/served_guami'
+        plmn_support_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/plmn_support'
+
+    Smf:    # Validated
+      type: object
+      properties:
+        smf_info:
+          type: object
+          properties:
+            sNssaiSmfInfoList:
+              $ref: '#/components/schemas/sNssaiSmfInfoList'
+        local_subscription_infos:
+          $ref: '#/components/schemas/local_subscription_infos_list'
+
+    Upf:    # Validated
       type: object
       properties:
         support_features:
@@ -440,21 +504,16 @@ components:
               enum:
                 - "on"
                 - "off"
-        sNssaiUpfInfoList:
-          $ref: '#/components/schemas/sNssaiUpfInfoList'
+        upf_info:
+          type: object
+          properties:
+            sNssaiUpfInfoList:
+              $ref: '#/components/schemas/sNssaiUpfInfoList'
 
-    dnns:
+    Dnns:   # Validated
       type: array
       items:
-        type: object
-        properties:
-          dnn: 
-            $ref: '#/components/schemas/dnn'
-          pdu_session_type:
-            type: string
-            enum:
-              - IPv4
-              - IPV4V6
-              - IPv6
-          ipv4_subnet:
-            $ref: "#/components/schemas/ipsubnet"
+        $ref: '#/components/schemas/dnnInfo'
+
+
+
