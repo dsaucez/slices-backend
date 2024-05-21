@@ -14,11 +14,11 @@ paths:
       description: Return the JWT that can be used to intereact with the API.
       responses:
         '200':    # status code
-          description: A JSON array of user names
+          description: The token
           content:
             application/json:
-              schema: 
-                $ref: '#/components/schemas/token'
+              schema:
+                $ref: "#/components/schemas/tokenmap"
 
   /logout:
     get:
@@ -47,7 +47,10 @@ paths:
           schema:
             $ref: '#/components/schemas/token'
       requestBody:
-        $ref: '#/components/schemas/dnn'
+        content:
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Core'
       responses:
         '200':
           description: OK, returns all information about the core
@@ -73,9 +76,9 @@ paths:
             $ref: '#/components/schemas/token'
       responses:
         '200':    # status code
-          description: A JSON array of user names
+          description: Core information
           content:
-            application/yaml:
+            application/json:
               schema:
                 $ref: '#/components/schemas/Core'
 
@@ -94,7 +97,10 @@ paths:
           schema:
             $ref: '#/components/schemas/token'
       requestBody:
-        $ref: '#/components/schemas/UE'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UE'
       responses:
         '200':    # status code
           description: UE added in the database if it did not exist yet
@@ -117,10 +123,11 @@ paths:
           name: token
           schema:
             $ref: '#/components/schemas/token'
-        - "in": header
-          name: upf
-          schema:
-            $ref: '#/components/schemas/Upf'
+      requestBody:
+        content:
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Upf'
 
       responses:
         '200':    # status code
@@ -229,6 +236,13 @@ components:
       type: string
       description: JWT API token
       example: edited.edited.edited; Path=/; Expires=Thu, 15 May 2025 21:33:45 GMT;
+
+
+    tokenmap:
+      type: object
+      properties:
+        token:
+          $ref: "#/components/schemas/token"
 
     5qi:
       type: integer

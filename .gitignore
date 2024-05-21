@@ -1,3 +1,4 @@
 core/.env
 core/go.sum
 core/env.list
+openapi/go.sum
