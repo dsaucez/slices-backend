@@ -6,6 +6,7 @@ info:
 servers:
   - url: http://localhost:8008/
     description: Test server
+
 paths:
   /token:
     get:
@@ -17,27 +18,443 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/Token'
+                $ref: '#/components/schemas/token'
   /logout:
     get:
       summary: Logout the user
       description: Logout the user
+      parameters:
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+      responses:
+        '200':    # status code
+          description: no content returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+  /core/:
+    post:
+      summary: Create a core
+      description: 'Create a core'
+      parameters:
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+      requestBody:
+        $ref: '#/components/schemas/dnn'
+      responses:
+        '200':
+          description: OK, returns all information about the core
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Core'
+
+  /core/{id}:
+    get:
+      summary: Get core configuration
+      description: Get core configuration
+      parameters:
+        - "in": path
+          name: id
+          allowEmptyValue: false
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
       responses:
         '200':    # status code
           description: A JSON array of user names
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Core'
+
+  /core/{id}/UE:
+    post:
+      summary: Add a UE to the database
+      description: Add a UE to the database
+      parameters:
+        - "in": path
+          name: id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+      requestBody:
+        $ref: '#/components/schemas/UE'
+      responses:
+        '200':    # status code
+          description: UE added in the database if it did not exist yet
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/Empty'
+
+  /core/{id}/UPF:
+    post:
+      summary: Add a UE to the database
+      description: Add a UE to the database
+      parameters:
+        - "in": path
+          name: id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+        - "in": header
+          name: upf
+          schema:
+            $ref: '#/components/schemas/Upf'
+
+      responses:
+        '200':    # status code
+          description: UE added in the database if it did not exist yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+
+  /core/{id}/UE/{imsi}:
+    get:
+      summary: Get UE information
+      description: GET UE information
+      parameters:
+        - "in": path
+          name: id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+        - "in": path
+          name: imsi
+          required: true
+          schema:
+            $ref: '#/components/schemas/imsi'
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+      responses:
+        '200':    # status code
+          description: UE information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UE'
+
 components:
   schemas:
-    Token:
-      type: object
-      required:
-        - token
-      properties:
-        token:
-          type: string
-          example: JWT API token
+    # == Atomic schemas ========================================================
     Empty:
       type: object
+    
+    uuid:
+      type: string
+      example: "949c72df-6597-4273-ab4b-aa6d766b9c95"
+    
+    imsi:
+      type: string
+      example: "001010000000001"  
+    
+    dnn:
+      type: string
+      example: "internet"
+
+    mcc:
+      type: string
+      description: MCC
+      example: "00101"
+
+    mnc:
+      type: string
+      description:  MNC
+      example: "01"
+
+    tac:
+      type: string
+      description: TAC, expressed in hexadecimal
+      example: "0x0001"
+
+    plnm:
+      type: string
+      description: PLNM
+      example: "00101"
+
+    sst: 
+      type: integer
+      description:  sst
+      example: 1
+
+    sd:
+      type: string
+      description: Slice Descriptor, expressed in hexadecimal
+      example: "FFFFFF"
+
+    ipaddr:
+      type: string 
+      example: 192.0.2.42
+
+    ipsubnet:
+      type: string
+      example: 192.0.2.0/24
+
+    region_id:
+      type: string
+      example: ""
+
+    set_id:
+      type: string
+      example: "001"
+    
+    amf_pointer:
+      type: string
+      example: "01"
+
+    token:
+      type: string
+      description: JWT API token
+      example: edited.edited.edited; Path=/; Expires=Thu, 15 May 2025 21:33:45 GMT;
+
+    5qi:
+      type: integer
+      minimum: 0
+      maximum: 256
+      example: 5
+
+    bandwidth:
+      type: string
+      example: 200Mbps
+
+    # == 5G objects ============================================================
+    nssai:
+      type: object
+      required:
+        - sst
+      properties:
+        sst:
+          $ref: '#/components/schemas/sst'
+        sd:
+          $ref: '#/components/schemas/sd'
+
+    dnnInfo:
+      type: object
+      properties:
+        dnn:
+          $ref: '#/components/schemas/dnn'
+
+    sNssaiSmfInfo:
+      type: object
+      properties:
+        sNssai:
+          $ref: '#/components/schemas/nssai'
+          required: true
+        dnnSmfInfoList:
+          type: array
+          items:
+            $ref: '#/components/schemas/dnnInfo'
+            uniqueItems: true
+
+    sNssaiSmfInfoList:
+      type: array
+      items:
+        $ref: '#/components/schemas/sNssaiSmfInfo'
+
+    qos_profile:
+      type: object
+      required:
+        - 5qi
+        - session_ambr_ul
+        - session_ambr_dl
+      properties:
+        5qi:
+          $ref: '#/components/schemas/5qi'
+        session_ambr_ul:
+          $ref: "#/components/schemas/bandwidth"
+        session_ambr_dl:
+          $ref: "#/components/schemas/bandwidth"
+
+    local_subscription_infos:
+      type: object
+      required:
+        - single_nssai
+        - dnn
+        - qos_profile
+      properties:
+        single_nssai:
+          $ref: "#/components/schemas/nssai"
+        dnn:
+          $ref: '#/components/schemas/dnn'
+          required: true
+        qos_profile:
+          $ref: "#/components/schemas/qos_profile"
+
+    sNssaiUpfInfo:
+      type: object
+      properties:
+        sNssai:
+          $ref: '#/components/schemas/nssai'
+          required: true
+        dnnUpfInfoList:
+          type: array
+          items:
+            $ref: '#/components/schemas/dnnInfo'
+            uniqueItems: true
+
+    sNssaiUpfInfoList:
+      type: array
+      items:
+        $ref: '#/components/schemas/sNssaiUpfInfo'
+
+    plmn_support_list:
+      type: object
+      properties:
+        mcc:
+          $ref: '#/components/schemas/mcc'
+          required: true
+        mnc:
+          $ref: '#/components/schemas/mnc'
+          required: true
+        tac:
+          $ref: '#/components/schemas/tac'
+          required: true
+        nssai:
+          type: array
+          items:
+            $ref: '#/components/schemas/nssai'
+          uniqueItems: true
+
+    served_guami_list:
+      type: object
+      properties:
+        mcc:
+          $ref: '#/components/schemas/mcc'
+          required: true
+        mnc:
+          $ref: '#/components/schemas/mnc'
+          required: true
+        region_id:
+          $ref: '#/components/schemas/region_id'
+          required: true
+        set_id:
+          $ref: '#/components/schemas/set_id'
+          required: true
+        amf_pointer:
+          $ref: '#/components/schemas/amf_pointer'
+          required: true
+
+    # == API objects ===========================================================
+    CoreParams:
+      type: object
+      required:
+        - mcc
+        - mnc
+        - tac
+      properties:
+        mcc:
+          $ref: '#/components/schemas/mcc'
+        mnc:
+          $ref: '#/components/schemas/mnc'
+        tac:
+          $ref: '#/components/schemas/tac'
+        upf:
+          type: boolean
+          default: false
+          description: Is the UPF provided by the core service
+    
+    Core:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        parameters:
+          $ref: '#/components/schemas/CoreParams'
+        network_functions:
+          $ref: '#/components/schemas/NetworkFunctions'
+    
+    NetworkFunctions:
+      type: object
+      required:
+        - "smf"
+        - "amf"
+      properties:
+        amf:
+          type: object
+          properties:
+            ipaddr:
+              $ref: '#/components/schemas/ipaddr'
+        smf:
+          type: object
+          properties:
+            ipaddr:
+              $ref: '#/components/schemas/ipaddr'
+        upf:
+          type: object
+          properties:
+            ipaddr:
+              $ref: '#/components/schemas/ipaddr'
+    
+    UE:
+      description: User Equipment
+      type: object
+      required:
+        - plnm
+        - dnn
+        - imsi
+        - key
+        - opc
+      properties:
+        plnm:
+          $ref: '#/components/schemas/plnm'
+        dnn:
+          $ref: '#/components/schemas/dnn'
+        imsi:
+            $ref: '#/components/schemas/imsi'
+        key:
+          type: string
+          example: "00112233445566778899aabbccddeeff"
+        opc:
+          type: string
+          example: "98703558a143aa00a69331391e26c4a7"
+
+    Upf:
+      type: object
+      properties:
+        support_features:
+          type: object
+          properties:
+            enable_snat:
+              type: string
+              enum:
+                - "on"
+                - "off"
+        sNssaiUpfInfoList:
+          $ref: '#/components/schemas/sNssaiUpfInfoList'
+
+    dnns:
+      type: array
+      items:
+        type: object
+        properties:
+          dnn: 
+            $ref: '#/components/schemas/dnn'
+          pdu_session_type:
+            type: string
+            enum:
+              - IPv4
+              - IPV4V6
+              - IPv6
+          ipv4_subnet:
+            $ref: "#/components/schemas/ipsubnet"
