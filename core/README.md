@@ -12,6 +12,8 @@ http://localhost:8008/redirect-call).
 https://portal.slices-sc.eu/oauth/token) and OAUTH authorization (e.g.,
 https://portal.slices-sc.eu/oauth/authorize)
 
+`BASE_PATH` is the basepath used as a prefix to all API andpoints (e.g., `/v1`)
+
 ### Get Dependencies
 ```
  go get -d -v .

@@ -60,7 +60,7 @@ func TokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	m := make(map[string]string)
 	m["token"] = tokenCookie.Value
-	m["hello"] = "world"
+	//m["hello"] = "world"
 	token, _ := json.Marshal(m)
 
 	http.SetCookie(w, &http.Cookie{

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../../../configuration-schema.json
+# yaml-language-server: $schema=./configuration-schema.json
 package: api
 output: api/api.generated.go
 generate:

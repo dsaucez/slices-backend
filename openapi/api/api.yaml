@@ -1,13 +1,14 @@
 openapi: 3.0.1
 info:
-  title: SLICES-backend
+  title: SLICES post-5G blueprint backend
   description: Backend server to manage the post-5G blueprint
   version: 0.1.0
-servers:
-  - url: http://localhost:8008/
-    description: Dev server
 
-paths:
+servers:
+  - url: http://localhost:8008/v1
+    description: Local Dev server
+
+paths:            
   /token:
     get:
       summary: Generate and return an JWT API token
@@ -48,16 +49,22 @@ paths:
             $ref: '#/components/schemas/token'
       requestBody:
         content:
-          application/yaml:
+          application/json:
             schema:
-              $ref: '#/components/schemas/Core'
+              $ref: '#/components/schemas/CoreParams'
       responses:
-        '200':
+        '201':
           description: OK, returns all information about the core
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Core'
+        '500':
+          description: Error while processing the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /core/{id}:
     get:
@@ -74,6 +81,13 @@ paths:
           name: token
           schema:
             $ref: '#/components/schemas/token'
+        - "in": query
+          name: action
+          schema:
+            type: string
+            enum:
+              - deploy
+          required: false
       responses:
         '200':    # status code
           description: Core information
@@ -81,6 +95,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Core'
+        '404':    # status code
+          description: Core not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
 
   /core/{id}/UE:
     post:
@@ -164,9 +184,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/UE'
 
+  /cores/:
+    get:
+      summary: List all cores
+      description: 'List all cores'
+      parameters:
+        - "in": cookie
+          name: token
+          schema:
+            $ref: '#/components/schemas/token'
+      responses:
+        '200':
+          description: OK, returns all information about the core
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Core'
+
 components:
   schemas:
     # == Atomic schemas ========================================================
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Failed to read Request
+
     Empty:
       type: object
     
@@ -460,6 +506,13 @@ components:
           required: true
         network_functions:
           $ref: '#/components/schemas/NetworkFunctions'
+        state:
+          type: string
+          enum:
+            - created
+            - deployed
+            - deploying
+            - stopped
         
     UE:
       description: User Equipment
