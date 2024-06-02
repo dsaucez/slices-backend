@@ -55,6 +55,14 @@ func returnError(w http.ResponseWriter, r *http.Request, errormsg string) {
 }
 
 // == Core functions ===========================================================
+type CoreErrorCode int
+
+const (
+	OK CoreErrorCode = iota
+	NOTFOUND
+	INVALIDSTATE
+)
+
 func createCore(core_params CoreParams) Core {
 	var id Uuid = uuid.New().String()
 	var state CoreState = Created
@@ -87,18 +95,13 @@ func stopCore(id string) {
 	core.State = &state
 }
 
-func deleteCore(id string) (int, string) {
-	const (
-		OK           int = 0
-		NOTFOND      int = 1
-		INVALIDSTATE int = 2
-	)
+func deleteCore(id string) (CoreErrorCode, string) {
 	core := db[id]
 
 	// sanity checks
 	if core == nil {
 		msg := fmt.Sprintf("core %s does not exist", id)
-		return NOTFOND, msg
+		return NOTFOUND, msg
 	}
 	if *core.State != Stopped {
 		msg := fmt.Sprintf("trying to delete core %s that is not stopped", id)
@@ -135,18 +138,19 @@ func (Server) DeleteCoreId(w http.ResponseWriter, r *http.Request, id Uuid, para
 	code, msg := deleteCore(id)
 
 	// sanity checks
-	if code == 1 {
+	switch code {
+	case NOTFOUND:
 		log.Println(msg)
 		returnNotFound(w, r, Empty{})
 		return
-	}
-	if code == 2 {
+	case INVALIDSTATE:
 		log.Println(msg)
 		returnError(w, r, msg)
 		return
+	default:
+		returnOk(w, r, core)
+		return
 	}
-
-	returnOk(w, r, core)
 }
 
 // Get core configuration
