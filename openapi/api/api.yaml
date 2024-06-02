@@ -67,27 +67,26 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /core/{id}:
+    parameters:
+    - "in": path
+      name: id
+      allowEmptyValue: false
+      required: true
+      schema:
+        $ref: '#/components/schemas/uuid'
+    - "in": cookie
+      name: token
+      schema:
+        $ref: '#/components/schemas/token'
+    - "in": query
+      name: action
+      schema:
+        $ref: '#/components/schemas/CoreActions'
+      required: false
     get:
       summary: Get core configuration
       description: Get core configuration
-      parameters:
-        - "in": path
-          name: id
-          allowEmptyValue: false
-          required: true
-          schema:
-            $ref: '#/components/schemas/uuid'
-        - "in": cookie
-          name: token
-          schema:
-            $ref: '#/components/schemas/token'
-        - "in": query
-          name: action
-          schema:
-            type: string
-            enum:
-              - deploy
-          required: false
+
       responses:
         '200':    # status code
           description: Core information
@@ -95,6 +94,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Core'
+        '404':    # status code
+          description: Core not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+    delete:
+      summary: Delete the core configuration
+      description: Delete the core configuration
+      responses:
+        '200':    # status code
+          description: Core is successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
         '404':    # status code
           description: Core not found
           content:
@@ -507,13 +522,23 @@ components:
         network_functions:
           $ref: '#/components/schemas/NetworkFunctions'
         state:
-          type: string
-          enum:
-            - created
-            - deployed
-            - deploying
-            - stopped
-        
+          $ref: '#/components/schemas/CoreState'
+
+    CoreState:
+        type: string
+        enum:
+          - created
+          - deploying
+          - deployed
+          - stopping
+          - stopped
+
+    CoreActions:
+        type: string
+        enum:
+          - deploy
+          - stop
+
     UE:
       description: User Equipment
       type: object

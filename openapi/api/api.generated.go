@@ -11,12 +11,19 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for CoreActions.
+const (
+	Deploy CoreActions = "deploy"
+	Stop   CoreActions = "stop"
+)
+
 // Defines values for CoreState.
 const (
 	Created   CoreState = "created"
 	Deployed  CoreState = "deployed"
 	Deploying CoreState = "deploying"
 	Stopped   CoreState = "stopped"
+	Stopping  CoreState = "stopping"
 )
 
 // Defines values for UpfSupportFeaturesEnableSnat.
@@ -32,11 +39,6 @@ const (
 	IPv6   DnnInfoPduSessionType = "IPv6"
 )
 
-// Defines values for GetCoreIdParamsAction.
-const (
-	Deploy GetCoreIdParamsAction = "deploy"
-)
-
 // N5qi defines model for 5qi.
 type N5qi = int
 
@@ -48,8 +50,8 @@ type Core struct {
 	Uuid             *Uuid             `json:"uuid,omitempty"`
 }
 
-// CoreState defines model for Core.State.
-type CoreState string
+// CoreActions defines model for CoreActions.
+type CoreActions string
 
 // CoreParams defines model for CoreParams.
 type CoreParams struct {
@@ -67,6 +69,9 @@ type CoreParams struct {
 	// Tac TAC, expressed in hexadecimal
 	Tac Tac `json:"tac"`
 }
+
+// CoreState defines model for CoreState.
+type CoreState string
 
 // Dnns defines model for Dnns.
 type Dnns = []DnnInfo
@@ -211,14 +216,17 @@ type PostCoreParams struct {
 	Token *Token `form:"token,omitempty" json:"token,omitempty"`
 }
 
-// GetCoreIdParams defines parameters for GetCoreId.
-type GetCoreIdParams struct {
-	Action *GetCoreIdParamsAction `form:"action,omitempty" json:"action,omitempty"`
-	Token  *Token                 `form:"token,omitempty" json:"token,omitempty"`
+// DeleteCoreIdParams defines parameters for DeleteCoreId.
+type DeleteCoreIdParams struct {
+	Action *CoreActions `form:"action,omitempty" json:"action,omitempty"`
+	Token  *Token       `form:"token,omitempty" json:"token,omitempty"`
 }
 
-// GetCoreIdParamsAction defines parameters for GetCoreId.
-type GetCoreIdParamsAction string
+// GetCoreIdParams defines parameters for GetCoreId.
+type GetCoreIdParams struct {
+	Action *CoreActions `form:"action,omitempty" json:"action,omitempty"`
+	Token  *Token       `form:"token,omitempty" json:"token,omitempty"`
+}
 
 // PostCoreIdUEParams defines parameters for PostCoreIdUE.
 type PostCoreIdUEParams struct {
@@ -256,6 +264,9 @@ type ServerInterface interface {
 	// Create a core
 	// (POST /core/)
 	PostCore(w http.ResponseWriter, r *http.Request, params PostCoreParams)
+	// Delete the core configuration
+	// (DELETE /core/{id})
+	DeleteCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params DeleteCoreIdParams)
 	// Get core configuration
 	// (GET /core/{id})
 	GetCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params GetCoreIdParams)
@@ -312,6 +323,56 @@ func (siw *ServerInterfaceWrapper) PostCore(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostCore(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// DeleteCoreId operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCoreId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id Uuid
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteCoreIdParams
+
+	// ------------- Optional query parameter "action" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "action", r.URL.Query(), &params.Action)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
+		return
+	}
+
+	var cookie *http.Cookie
+
+	if cookie, err = r.Cookie("token"); err == nil {
+		var value Token
+		err = runtime.BindStyledParameterWithOptions("simple", "token", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+			return
+		}
+		params.Token = &value
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCoreId(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -701,6 +762,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/core/", wrapper.PostCore).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/core/{id}", wrapper.DeleteCoreId).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/core/{id}", wrapper.GetCoreId).Methods("GET")
 

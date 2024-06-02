@@ -54,34 +54,99 @@ func returnError(w http.ResponseWriter, r *http.Request, errormsg string) {
 	returnGeneric(w, r, Error{Error: &errormsg}, http.StatusInternalServerError)
 }
 
-// == Paths ====================================================================
-
-// (POST /core/)
-func (Server) PostCore(w http.ResponseWriter, r *http.Request, params PostCoreParams) {
-	// Create the core
-	// ..TODO
-
-	// retriere info
-	core_params, err := getRequestBody(r)
-
-	if err {
-		returnError(w, r, "Failed to read Request")
-		return
-	}
+// == Core functions ===========================================================
+func createCore(core_params CoreParams) Core {
 	var id Uuid = uuid.New().String()
-	state := new(CoreState)
+	var state CoreState = Created
 	nfs := new(NetworkFunctions)
 
 	core := Core{
 		NetworkFunctions: nfs,
 		Parameters:       &core_params,
 		Uuid:             &id,
-		State:            state,
+		State:            &state,
 	}
 
 	db[id] = &core
+	return core
+}
+
+func deployCore(id string) {
+	fmt.Println("should deploy the core ", id)
+	core := db[id]
+
+	var state CoreState = Deployed
+	core.State = &state
+}
+
+func stopCore(id string) {
+	fmt.Println("should stop the core ", id)
+	core := db[id]
+
+	var state CoreState = Stopped
+	core.State = &state
+}
+
+func deleteCore(id string) (int, string) {
+	const (
+		OK           int = 0
+		NOTFOND      int = 1
+		INVALIDSTATE int = 2
+	)
+	core := db[id]
+
+	// sanity checks
+	if core == nil {
+		msg := fmt.Sprintf("core %s does not exist", id)
+		return NOTFOND, msg
+	}
+	if *core.State != Stopped {
+		msg := fmt.Sprintf("trying to delete core %s that is not stopped", id)
+		return INVALIDSTATE, msg
+	}
+
+	delete(db, id)
+
+	return OK, fmt.Sprintf("core %s deleted", id)
+}
+
+// == Paths ====================================================================
+
+// (POST /core/)
+func (Server) PostCore(w http.ResponseWriter, r *http.Request, params PostCoreParams) {
+	// retriere info
+	core_params, err := getRequestBody(r)
+	if err {
+		returnError(w, r, "Failed to read Request")
+		return
+	}
+
+	// Create the core
+	core := createCore(core_params)
 
 	returnCreated(w, r, core)
+}
+
+// Delete the core configuration
+// (DELETE /core/{id})
+func (Server) DeleteCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params DeleteCoreIdParams) {
+	core := db[id]
+
+	code, msg := deleteCore(id)
+
+	// sanity checks
+	if code == 1 {
+		log.Println(msg)
+		returnNotFound(w, r, Empty{})
+		return
+	}
+	if code == 2 {
+		log.Println(msg)
+		returnError(w, r, msg)
+		return
+	}
+
+	returnOk(w, r, core)
 }
 
 // Get core configuration
@@ -95,13 +160,18 @@ func (Server) GetCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params 
 		return
 	}
 	if params.Action != nil {
-		if *params.Action == "deploy" {
-			fmt.Println("should deploy the core ", id)
+		if *params.Action == Deploy {
 			var state CoreState = Deploying
 			core.State = &state
 
-			returnOk(w, r, core)
-			return
+			deployCore(id)
+		}
+		if *params.Action == Stop {
+
+			var state CoreState = Stopping
+			core.State = &state
+
+			stopCore(id)
 		}
 	}
 
