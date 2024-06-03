@@ -8,12 +8,60 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/casbin/casbin"
 	"github.com/google/uuid"
 )
 
 var (
-	db = make(map[string]*Core)
+	db       = make(map[string]*Core)
+	enforcer *casbin.Enforcer
 )
+
+func (ctx *MiddlewareCtx) Init() {
+	var err error
+	enforcer, err = casbin.NewEnforcerSafe(ctx.Ctx["model"], ctx.Ctx["policy"])
+	if err != nil {
+		panic(err)
+	}
+}
+
+// == Middleware ===============================================================
+type MiddlewareCtx struct {
+	Ctx map[string]any
+}
+
+func (ctx *MiddlewareCtx) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Authentication handler", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (ctx *MiddlewareCtx) RoleMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(ctx.Ctx)
+
+		cookie, err := r.Cookie("username")
+		if err != nil {
+			returnGeneric(w, r, "token not defined", http.StatusBadRequest)
+			return
+		}
+		username := cookie.Value
+
+		// verify that the user is allowed to do this action
+		authorized, err := enforcer.EnforceSafe(username, r.URL.Path, r.Method)
+		if err != nil {
+			returnError(w, r, "Could not enforce")
+			return
+		}
+		if !authorized {
+			returnGeneric(w, r, "access denied", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 // == Helper functions =========================================================
 

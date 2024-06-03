@@ -1,0 +1,5 @@
+p, usergrp, /v1/*, GET
+p, usergrp, /v1/core/, POST
+p, admingrp, /v1/*, *
+g, admin, admingrp
+g, guest, usergrp
