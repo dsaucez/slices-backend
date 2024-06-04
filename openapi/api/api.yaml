@@ -8,11 +8,34 @@ servers:
   - url: http://localhost:8008/v1
     description: Local Dev server
 
-paths:            
+paths:
+  /authentication:
+    get:
+      summary: XX
+      description: XX
+      responses:
+        '200':    # status code
+          description: XX
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+  /redirect-call:
+    get:
+      summary: XX
+      description: XX
+      responses:
+        '200':    # status code
+          description: XX
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
+                
   /token:
     get:
       summary: Generate and return an JWT API token
-      description: Return the JWT that can be used to intereact with the API.
+      description: Generate and return an JWT API token
       responses:
         '200':    # status code
           description: The token

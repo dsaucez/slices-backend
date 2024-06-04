@@ -261,6 +261,9 @@ type PostCoreIdUEJSONRequestBody = UE
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// XX
+	// (GET /authentication)
+	GetAuthentication(w http.ResponseWriter, r *http.Request)
 	// Create a core
 	// (POST /core/)
 	PostCore(w http.ResponseWriter, r *http.Request, params PostCoreParams)
@@ -285,7 +288,10 @@ type ServerInterface interface {
 	// Logout the user
 	// (GET /logout)
 	GetLogout(w http.ResponseWriter, r *http.Request, params GetLogoutParams)
-	// Generate and return an JWT API token
+	// XX
+	// (GET /redirect-call)
+	GetRedirectCall(w http.ResponseWriter, r *http.Request)
+	// Return the current JWT API token (generate it if it doesn't exist yet)
 	// (GET /token)
 	GetToken(w http.ResponseWriter, r *http.Request)
 }
@@ -298,6 +304,21 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetAuthentication operation middleware
+func (siw *ServerInterfaceWrapper) GetAuthentication(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuthentication(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
 
 // PostCore operation middleware
 func (siw *ServerInterfaceWrapper) PostCore(w http.ResponseWriter, r *http.Request) {
@@ -633,6 +654,21 @@ func (siw *ServerInterfaceWrapper) GetLogout(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// GetRedirectCall operation middleware
+func (siw *ServerInterfaceWrapper) GetRedirectCall(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRedirectCall(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // GetToken operation middleware
 func (siw *ServerInterfaceWrapper) GetToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -761,6 +797,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.HandleFunc(options.BaseURL+"/authentication", wrapper.GetAuthentication).Methods("GET")
+
 	r.HandleFunc(options.BaseURL+"/core/", wrapper.PostCore).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/core/{id}", wrapper.DeleteCoreId).Methods("DELETE")
@@ -776,6 +814,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/cores/", wrapper.GetCores).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/logout", wrapper.GetLogout).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/redirect-call", wrapper.GetRedirectCall).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/token", wrapper.GetToken).Methods("GET")
 

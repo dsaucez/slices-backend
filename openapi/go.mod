@@ -36,6 +36,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.10 // indirect
 	github.com/casbin/casbin/v2 v2.8.7 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect

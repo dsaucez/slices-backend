@@ -1,5 +1,6 @@
-p, usergrp, /v1/*, GET
-p, usergrp, /v1/core/, POST
-p, admingrp, /v1/*, *
+p, usergrp, /*, GET
+p, usergrp, /core/, POST
+p, admingrp, /*, *
 g, admin, admingrp
+g, dsaucezi, admingrp
 g, guest, usergrp
