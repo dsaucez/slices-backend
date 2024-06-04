@@ -14,23 +14,13 @@ import (
 
 	tok "openapi/token"
 
-	"github.com/casbin/casbin"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
 var (
-	db       = make(map[string]*Core)
-	enforcer *casbin.Enforcer
+	db = make(map[string]*Core)
 )
-
-func (ctx *MiddlewareCtx) Init() {
-	var err error
-	enforcer, err = casbin.NewEnforcerSafe(ctx.Ctx["model"], ctx.Ctx["policy"])
-	if err != nil {
-		panic(err)
-	}
-}
 
 var (
 	redirectURI  = os.Getenv("REDIRECT_URI")
@@ -40,7 +30,7 @@ var (
 	clientSecret = os.Getenv("CLIENT_SECRET")
 )
 
-var MyToken struct {
+var LocalToken struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
 	IDToken      string `json:"id_token"`
@@ -49,89 +39,8 @@ var MyToken struct {
 	TokenType    string `json:"token_type"`
 }
 
-// == Middleware ===============================================================
-type MiddlewareCtx struct {
-	Ctx map[string]any
-}
-
-func skipMiddleware(w http.ResponseWriter, r *http.Request) bool {
-	switch r.URL.Path {
-	case "/authentication":
-		return true
-	case "/redirect-call":
-		return true
-	case "/logout":
-		return true
-	}
-	return false
-}
-
-func (ctx *MiddlewareCtx) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if skipMiddleware(w, r) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		tokenCookie, err := r.Cookie("token")
-		if err != nil || !tok.VerifyToken(tokenCookie.Value) {
-			// Redirect the user to the authentication endpoint if not authenticated.
-			queryParams := url.Values{}
-			requestedURI := base64.StdEncoding.EncodeToString([]byte(r.RequestURI))
-			queryParams.Add("requested_uri", requestedURI)
-
-			newURI := url.URL{
-				Path:     "/authentication",
-				RawQuery: queryParams.Encode(),
-			}
-
-			fmt.Println("redirection!")
-			http.Redirect(w, r, newURI.RequestURI(), http.StatusFound)
-			return
-		}
-		// Call the next handler if the user is authenticated.
-		next.ServeHTTP(w, r)
-
-	})
-}
-
-func (ctx *MiddlewareCtx) RoleMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if skipMiddleware(w, r) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		fmt.Println(ctx.Ctx)
-
-		////////////
-		//
-		// Parse the ID token to extract the claims (payload)
-		// Access the "sub" claim from the token's claims
-		// Extract the username from the claims
-		cookieInfo, error := getCookieInfo(r, w)
-		if error {
-			returnError(w, r, cookieInfo["error"])
-			return
-		}
-		///////////////////////
-
-		// verify that the user is allowed to do this action
-		authorized, err := enforcer.EnforceSafe(cookieInfo["username"], r.URL.Path, r.Method)
-		if err != nil {
-			returnError(w, r, "Could not enforce")
-			return
-		}
-		if !authorized {
-			returnGeneric(w, r, "access denied", http.StatusForbidden)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func getCookieInfo(r *http.Request, w http.ResponseWriter) (map[string]string, bool) {
+// == Helper functions =========================================================
+func getTokenInfo(r *http.Request, w http.ResponseWriter) (map[string]string, bool) {
 	tokenCookie, err := r.Cookie("token")
 
 	if err != nil {
@@ -172,8 +81,6 @@ func getCookieInfo(r *http.Request, w http.ResponseWriter) (map[string]string, b
 	cookieInfo := map[string]string{"token": tokenCookie.Value, "email": email, "username": username}
 	return cookieInfo, false
 }
-
-// == Helper functions =========================================================
 
 func getRequestBody(r *http.Request) (PostCoreJSONRequestBody, bool) {
 	body, err := io.ReadAll(r.Body)
@@ -275,8 +182,6 @@ func deleteCore(id string) (CoreErrorCode, string) {
 
 // (GET /authentication)
 func (Server) GetAuthentication(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("coucou")
-
 	requestedURI := r.URL.Query().Get("requested_uri")
 	redirectURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&scope=openid userinfo&response_type=code&state=%s",
 		oauthURL, clientId, redirectURI, requestedURI)
@@ -332,20 +237,20 @@ func (Server) GetRedirectCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.Unmarshal(body, &MyToken)
+	err = json.Unmarshal(body, &LocalToken)
 	if err != nil {
 		http.Error(w, "Failed to parse token response", http.StatusInternalServerError)
 		return
 	}
 
-	if !tok.VerifyToken(MyToken.IDToken) {
+	if !tok.VerifyToken(LocalToken.IDToken) {
 		http.Error(w, "Token is not valid after JWKS verification.", http.StatusInternalServerError)
 		return
 	} else {
 		fmt.Printf("The token is valid.\n")
 	}
 
-	// Redirect the user to the desired page after successful authentication (k8s setup parallely executed)
+	// Redirect the user to the desired page after successful authentication
 	// Retrieve state to get initial requested URI
 	state := r.URL.Query().Get("state")
 	bytes, err := base64.StdEncoding.DecodeString(state)
@@ -357,7 +262,7 @@ func (Server) GetRedirectCall(w http.ResponseWriter, r *http.Request) {
 	// Store the access token and other relevant information as needed in a cookie to track user authentication for later use
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
-		Value:    MyToken.IDToken,
+		Value:    LocalToken.IDToken,
 		HttpOnly: true,
 		Secure:   true,
 	})
@@ -474,13 +379,13 @@ func (Server) GetLogout(w http.ResponseWriter, r *http.Request, params GetLogout
 // Generate and return an JWT API token
 // (GET /token)
 func (Server) GetToken(w http.ResponseWriter, r *http.Request) {
-	cookieInfo, error := getCookieInfo(r, w)
+	tokenInfo, error := getTokenInfo(r, w)
 	if error {
-		returnError(w, r, cookieInfo["error"])
+		returnError(w, r, tokenInfo["error"])
 		return
 	}
 
-	var token Token = cookieInfo["token"]
+	var token Token = tokenInfo["token"]
 	resp := Tokenmap{
 		Token: &token,
 	}
