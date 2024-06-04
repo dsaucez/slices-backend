@@ -37,15 +37,14 @@ func init() {
 }
 
 func skipMiddleware(w http.ResponseWriter, r *http.Request) bool {
-	switch r.URL.Path {
-	case "/authentication":
-		return true
-	case "/redirect-call":
-		return true
-	case "/logout":
-		return true
+	toIgnore := map[string]bool{
+		"/authentication": true,
+		"/redirect-call":  true,
+		"/logout":         true,
 	}
-	return false
+	_, found := toIgnore[r.URL.Path]
+
+	return found
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
