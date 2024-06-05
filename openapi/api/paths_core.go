@@ -49,23 +49,17 @@ func (Server) GetCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params 
 	core := getCoreDb(id)
 
 	if core == nil {
-		log.Printf("core %s does not exist\n", id)
+		log.Printf("core %s does not exist!\n", id)
 		returnNotFound(w, r, Empty{})
 		return
 	}
 	if params.Action != nil {
 		if *params.Action == Deploy {
-			var state CoreState = Deploying
-			core.State = &state
-
-			deployCore(id)
+			core = deployCore(id)
 		}
 		if *params.Action == Stop {
+			core = stopCore(id)
 
-			var state CoreState = Stopping
-			core.State = &state
-
-			stopCore(id)
 		}
 	}
 
