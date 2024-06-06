@@ -3,19 +3,35 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/google/uuid"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var sdb *sql.DB
+var (
+	db     *sql.DB
+	dbPath string
+)
 
 func init() {
-	var err error
-	sdb, err = sql.Open("sqlite3", "./cores.db")
+	// load config
+	dbPath = os.Getenv("DB_PATH")
+
+	// set defaults
+	if len(dbPath) == 0 {
+		dbPath = "./db.db"
+	}
+
+	db = initDB()
+}
+
+// == CRUD DB operations =======================================================
+func initDB() *sql.DB {
+	//var err error
+	db, err := sql.Open("sqlite3", dbPath)
 
 	if err != nil {
 		log.Fatal(err)
@@ -26,23 +42,16 @@ func init() {
 	sts := `
 		CREATE TABLE IF NOT EXISTS cores(id TEXT NOT NULL, settings TEXT, PRIMARY KEY (ID));
 		`
-	_, err = sdb.Exec(sts)
+	_, err = db.Exec(sts)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return db
 }
 
-// == Core functions ===========================================================
-type CoreErrorCode int
-
-const (
-	CORE_OK CoreErrorCode = iota
-	CORE_NOTFOUND
-	CORE_INVALIDSTATE
-)
-
-func getCoreDb(id Uuid) *Core {
-	stm, err := sdb.Prepare("SELECT * FROM cores WHERE id = ?")
+func getCore(id Uuid) *Core {
+	stm, err := db.Prepare("SELECT * FROM cores WHERE id = ?")
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -69,10 +78,10 @@ func getCoreDb(id Uuid) *Core {
 	return &core
 }
 
-func getCoresDb() map[string]*Core {
+func getCores() map[Uuid]*Core {
 	ret := make(map[string]*Core)
 
-	rows, err := sdb.Query("SELECT * FROM cores;")
+	rows, err := db.Query("SELECT * FROM cores;")
 
 	if err != nil {
 		log.Println(err)
@@ -106,8 +115,8 @@ func getCoresDb() map[string]*Core {
 	return ret
 }
 
-func saveCoreDb(id string, core *Core) {
-	stm, err := sdb.Prepare("INSERT INTO Cores(id, settings) VALUES (?, ?);")
+func createCore(id Uuid, core *Core) {
+	stm, err := db.Prepare("INSERT INTO Cores(id, settings) VALUES (?, ?);")
 	if err != nil {
 		log.Println(err)
 		return
@@ -123,8 +132,8 @@ func saveCoreDb(id string, core *Core) {
 	}
 }
 
-func updateCoreDb(id string, core *Core) {
-	stm, err := sdb.Prepare("UPDATE cores SET settings = ? WHERE id = ?")
+func updateCore(id Uuid, core *Core) {
+	stm, err := db.Prepare("UPDATE cores SET settings = ? WHERE id = ?")
 	if err != nil {
 		log.Println(err)
 		return
@@ -140,8 +149,8 @@ func updateCoreDb(id string, core *Core) {
 	}
 }
 
-func deleteCoreDb(id string) {
-	stm, err := sdb.Prepare("DELETE FROM cores WHERE id = ?")
+func deleteCore(id Uuid) {
+	stm, err := db.Prepare("DELETE FROM cores WHERE id = ?")
 	if err != nil {
 		log.Println(err)
 		return
@@ -155,60 +164,75 @@ func deleteCoreDb(id string) {
 	}
 }
 
-func CreateCore(core_params CoreParams) Core {
+// == Core functions ===========================================================
+type CoreErrorCode int
+
+const (
+	CORE_OK CoreErrorCode = iota
+	CORE_NOTFOUND
+	CORE_INVALIDSTATE
+)
+
+func GetCore(id Uuid) *Core {
+	return getCore(id)
+}
+
+func GetCores() map[Uuid]*Core {
+	return getCores()
+}
+
+func CreateCore(core_params *CoreParams) *Core {
 	var id Uuid = uuid.New().String()
 	var state CoreState = Created
 	nfs := new(NetworkFunctions)
 
 	core := Core{
 		NetworkFunctions: nfs,
-		Parameters:       &core_params,
+		Parameters:       core_params,
 		Uuid:             &id,
 		State:            &state,
 	}
 
-	saveCoreDb(id, &core)
-	return core
+	createCore(id, &core)
+	return &core
 }
 
-func deployCore(id string) *Core {
+func DeployCore(id Uuid) *Core {
 	log.Println("should deploy the core ", id)
-	core := getCoreDb(id)
+	core := GetCore(id)
 
 	var state CoreState = Deployed
 	core.State = &state
 
-	updateCoreDb(id, core)
+	updateCore(id, core)
 
 	return core
 }
 
-func stopCore(id string) *Core {
+func StopCore(id Uuid) *Core {
 	log.Println("should stop the core ", id)
-	core := getCoreDb(id)
+	core := GetCore(id)
 
 	var state CoreState = Stopped
 	core.State = &state
 
-	updateCoreDb(id, core)
+	updateCore(id, core)
 
 	return core
 }
 
-func deleteCore(id string) (CoreErrorCode, string) {
-	core := getCoreDb(id)
+func DeleteCore(id Uuid) CoreErrorCode {
+	core := GetCore(id)
 
 	// sanity checks
 	if core == nil {
-		msg := fmt.Sprintf("core %s does not exist", id)
-		return CORE_NOTFOUND, msg
+		return CORE_NOTFOUND
 	}
 	if *core.State != Stopped {
-		msg := fmt.Sprintf("trying to delete core %s that is not stopped", id)
-		return CORE_INVALIDSTATE, msg
+		return CORE_INVALIDSTATE
 	}
 
-	deleteCoreDb(id)
+	deleteCore(id)
 
-	return CORE_OK, fmt.Sprintf("core %s deleted", id)
+	return CORE_OK
 }

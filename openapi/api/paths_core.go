@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -15,7 +16,7 @@ func (Server) PostCore(w http.ResponseWriter, r *http.Request, params PostCorePa
 	}
 
 	// Create the core
-	core := CreateCore(core_params)
+	core := CreateCore(&core_params)
 
 	returnCreated(w, r, core)
 }
@@ -23,22 +24,22 @@ func (Server) PostCore(w http.ResponseWriter, r *http.Request, params PostCorePa
 // Delete the core configuration
 // (DELETE /core/{id})
 func (Server) DeleteCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params DeleteCoreIdParams) {
-	core := getCoreDb(id)
-
-	code, msg := deleteCore(id)
+	code := DeleteCore(id)
 
 	// sanity checks
 	switch code {
 	case CORE_NOTFOUND:
+		msg := fmt.Sprintf("core %s does not exist", id)
 		log.Println(msg)
 		returnNotFound(w, r, Empty{})
 		return
 	case CORE_INVALIDSTATE:
+		msg := fmt.Sprintf("trying to delete core %s that is not stopped", id)
 		log.Println(msg)
 		returnError(w, r, msg)
 		return
 	default:
-		returnOk(w, r, core)
+		returnOk(w, r, Empty{})
 		return
 	}
 }
@@ -46,7 +47,7 @@ func (Server) DeleteCoreId(w http.ResponseWriter, r *http.Request, id Uuid, para
 // Get core configuration
 // (GET /core/{id})
 func (Server) GetCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params GetCoreIdParams) {
-	core := getCoreDb(id)
+	core := GetCore(id)
 
 	if core == nil {
 		log.Printf("core %s does not exist!\n", id)
@@ -55,10 +56,10 @@ func (Server) GetCoreId(w http.ResponseWriter, r *http.Request, id Uuid, params 
 	}
 	if params.Action != nil {
 		if *params.Action == Deploy {
-			core = deployCore(id)
+			core = DeployCore(id)
 		}
 		if *params.Action == Stop {
-			core = stopCore(id)
+			core = StopCore(id)
 
 		}
 	}
