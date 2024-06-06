@@ -19,7 +19,7 @@ paths:
           name: requested_uri
           schema:
             type: string
-          required: true
+          required: true 
 
       responses:
         '302':    # status code
@@ -267,6 +267,11 @@ paths:
                   $ref: '#/components/schemas/Core'
 
 components:
+  securitySchemes:
+    slicesOpenId:
+      type: openIdConnect
+      openIdConnectUrl: https://portal.slices-sc.eu/.well-known/openid-configuration
+
   schemas:
     # == Atomic schemas ========================================================
     Error:
@@ -654,6 +659,3 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/dnnInfo'
-
-
-

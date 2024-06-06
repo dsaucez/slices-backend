@@ -23,6 +23,15 @@ https://portal.slices-sc.eu/oauth/authorize)
 
 `BASE_PATH` is the basepath used as a prefix to all API andpoints (e.g., `/v1`)
 
+`PORT` is the port on which the backends listens. Default to `8008` if not defined.
+
+`DB_PATH` the location of the database. Default to `./db.db` if not defined.
+
+`RBAC_MODEL` casbin RBAC model. Default to `./model.conf` if not defined.
+`RBAC_POLICY` casbin RBAC policy. Defaults ot `./policy.csv` if not defined.
+
+`JWKS_URI` source of JWKS knowledge (e.g., `https://portal.slices-sc.eu/.well-known/jwks.json`).
+
 ## Start the server
 
 ### In a local development environement

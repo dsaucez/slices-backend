@@ -3,15 +3,25 @@ package token
 import (
 	"context"
 	"log"
+	"os"
 	"time"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func VerifyToken(token string) bool {
+var (
+	jwksURI string
+	algos   []string
+)
 
-	jwksURI := "https://portal.slices-sc.eu/.well-known/jwks.json"
+func init() {
+	jwksURI = os.Getenv("JWKS_URI")
+	algos = []string{"RS512", "ES256"}
+}
+
+func VerifyToken(token string) bool {
+	// jwksURI := "https://portal.slices-sc.eu/.well-known/jwks.json"
 
 	// Create a context that, when cancelled, ends the JWKS background refresh goroutine.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,7 +51,7 @@ func VerifyToken(token string) bool {
 	//example: jwtB64 := "eyJhbGciOiJFUzI1NiIsImtpZCI6ImVjMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnQuaWxhYnQuaW1lYy5iZSIsImF1ZCI6WyJ6anNjbThySkJIN2o5Nnk1c1VlVkY1c3YiXSwiaWF0IjoxNjg0ODQ1NzE2LCJleHAiOjE2ODQ4NDkzMTYsImF1dGhfdGltZSI6MTY4NDg0NTU2NCwiYXRfaGFzaCI6IkgxYlJ6ZGVpcTVTLUptTHBDYjNKRnciLCJzdWIiOiJrY2hpYm91YkBpbnJpYS5mciIsInVzZXJuYW1lIjoia2NoaWJvdWIiLCJ1cm4iOiJ1cm46cHVibGljaWQ6SUROK2lsYWJ0LmltZWMuYmUrdXNlcitrY2hpYm91YiIsInByb2plY3RfdXJucyI6W10sImVtYWlsIjoia2FvdXRhci5jaGlib3ViQGlucmlhLmZyIiwicHVibGljX3NzaF9rZXkiOiJzc2gtcnNhIEFBQUFCM056YUMxeWMyRUFBQUFEQVFBQkFBQUJBUURFcGNNdmkydlgrVFU2U2tTc3FDMHJvMnBHckMxK2laSCtqVjJid2s1MXZIRzlaVXJQeE0va1hwYnR4UnNpaVM5bzRrRU1Jd1FRbVNIWlRQbzVUdXFzak5ZcW5LTVdWeXJXZmo5ZkgxcENqNFVQSGxxL05OTVpZVUdLK2NpMFpMbjAvTk1OMzBhMHVXMlBjeFdLQXNQQms0MUp6WUFEZGFkb3M3VlBGa29KL3NGYldobkM0SnV6SmF2NUE5SUNvWlY0U2Rjc29oYjZUVWZwbnk2QUpMNEw4Y1hmYmpLTnhGVHRLeW1UeHZHeHBNRkRqQjIxelVLcjl5d3F6QUQvMFd6Sy9uL1U5ZERXeGJsaHpFTTA2OG5rY2RnM080YnY2dkd1RzhzUXl0MlFjOGhLT2Q4YTh4SCsxMFdocHUwRnNiQ3NmN25aQkFTanZsRjR4aXNRMU5hMyJ9.mNk3bI0_uIMSfMWzp1v8hM6nVH_fXi6zFQfdWkVnPLbBRvw2D0Lo04q4ON2uvGDpSU45ARYNT7IZWw33TkSVng"
 
 	// Parse the JWT.
-	tok, err := jwt.Parse(token, jwks.Keyfunc)
+	tok, err := jwt.Parse(token, jwks.Keyfunc, jwt.WithValidMethods(algos))
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok && ve.Errors == jwt.ValidationErrorExpired {
 			log.Println("The token is expired.")

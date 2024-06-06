@@ -48,8 +48,14 @@ func getTokenInfo(r *http.Request, w http.ResponseWriter) (map[string]string, bo
 		log.Println(msg)
 		return map[string]string{"error": msg}, true
 	}
+	public_ssh_key, ok := claims["public_ssh_key"].(string)
+	if !ok {
+		msg := "public ssh key not found in the token claims."
+		log.Println(msg)
+		return map[string]string{"error": msg}, true
+	}
 
-	cookieInfo := map[string]string{"token": tokenCookie.Value, "email": email, "username": username}
+	cookieInfo := map[string]string{"token": tokenCookie.Value, "email": email, "username": username, "public_ssh_key": public_ssh_key}
 	return cookieInfo, false
 }
 

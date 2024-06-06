@@ -31,7 +31,7 @@ var LocalToken struct {
 }
 
 // (GET /authentication)
-func (Server) GetAuthentication(w http.ResponseWriter, r *http.Request) {
+func (Server) GetAuthentication(w http.ResponseWriter, r *http.Request, params GetAuthenticationParams) {
 	requestedURI := r.URL.Query().Get("requested_uri")
 	redirectURL := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&scope=openid userinfo&response_type=code&state=%s",
 		oauthURL, clientId, redirectURI, requestedURI)
@@ -39,7 +39,7 @@ func (Server) GetAuthentication(w http.ResponseWriter, r *http.Request) {
 }
 
 // (GET /redirect-call)
-func (Server) GetRedirectCall(w http.ResponseWriter, r *http.Request) {
+func (Server) GetRedirectCall(w http.ResponseWriter, r *http.Request, params GetRedirectCallParams) {
 	// Extract the authorization code from the query parameters
 	code := r.URL.Query().Get("code")
 	if code == "" {

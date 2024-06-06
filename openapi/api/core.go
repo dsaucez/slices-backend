@@ -79,7 +79,7 @@ func getCore(id Uuid) *Core {
 }
 
 func getCores() map[Uuid]*Core {
-	ret := make(map[string]*Core)
+	ret := make(map[Uuid]*Core)
 
 	rows, err := db.Query("SELECT * FROM cores;")
 
