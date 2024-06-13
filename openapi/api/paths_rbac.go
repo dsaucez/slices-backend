@@ -93,8 +93,8 @@ func (Server) GetRedirectCall(w http.ResponseWriter, r *http.Request, params Get
 		return
 	}
 
-	if !tok.VerifyToken(LocalToken.IDToken) {
-		returnError(w, r, "Token is not valid after JWKS verification.")
+	if c, e := tok.VerifyToken(LocalToken.IDToken); c != tok.OK {
+		returnError(w, r, e.Error())
 		return
 	}
 

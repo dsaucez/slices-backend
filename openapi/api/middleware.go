@@ -41,6 +41,7 @@ func skipMiddleware(w http.ResponseWriter, r *http.Request) bool {
 		"/authentication": true,
 		"/redirect-call":  true,
 		"/logout":         true,
+		"/healthz":        true,
 	}
 	_, found := toIgnore[r.URL.Path]
 
@@ -55,7 +56,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenCookie, err := r.Cookie("token")
-		if err != nil || !tok.VerifyToken(tokenCookie.Value) {
+		var tokenValue string
+		if err == nil {
+			tokenValue = tokenCookie.Value
+		}
+		c, e := tok.VerifyToken(tokenValue)
+
+		if err != nil || c != tok.OK {
+			// if err != nil || tok.VerifyToken(tokenCookie.Value) > 0 {
+
+			if c == tok.GENERATION_ERROR {
+				returnError(w, r, e.Error())
+				return
+			}
+
 			// Redirect the user to the authentication endpoint if not authenticated.
 			queryParams := url.Values{}
 			requestedURI := base64.StdEncoding.EncodeToString([]byte(r.RequestURI))

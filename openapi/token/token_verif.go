@@ -2,6 +2,7 @@ package token
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -20,9 +21,18 @@ func init() {
 	algos = []string{"RS512", "ES256"}
 }
 
-func VerifyToken(token string) bool {
-	// jwksURI := "https://portal.slices-sc.eu/.well-known/jwks.json"
+type ErrorCode int
 
+const (
+	OK ErrorCode = iota
+	GENERATION_ERROR
+	TOKEN_EXPIRED
+	PARSE_ERROR
+	INVALID_TOKEN
+)
+
+func VerifyToken(token string) (ErrorCode, error) {
+	// TODO: DSA: handle better errors
 	// Create a context that, when cancelled, ends the JWKS background refresh goroutine.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context when the function returns
@@ -44,49 +54,49 @@ func VerifyToken(token string) bool {
 	// Create the JWKS from the resource at the given URL.
 	jwks, err := keyfunc.Get(jwksURI, options)
 	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
+		e := fmt.Errorf("failed to create JWKS from resource at the given URL")
+		log.Printf("%s: %s\n", e.Error(), err.Error())
+		return GENERATION_ERROR, e
 	}
 
 	// Get a JWT to parse. This is the access token sent from the OIDC server in exchange to access code.
-	//example: jwtB64 := "eyJhbGciOiJFUzI1NiIsImtpZCI6ImVjMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2FjY291bnQuaWxhYnQuaW1lYy5iZSIsImF1ZCI6WyJ6anNjbThySkJIN2o5Nnk1c1VlVkY1c3YiXSwiaWF0IjoxNjg0ODQ1NzE2LCJleHAiOjE2ODQ4NDkzMTYsImF1dGhfdGltZSI6MTY4NDg0NTU2NCwiYXRfaGFzaCI6IkgxYlJ6ZGVpcTVTLUptTHBDYjNKRnciLCJzdWIiOiJrY2hpYm91YkBpbnJpYS5mciIsInVzZXJuYW1lIjoia2NoaWJvdWIiLCJ1cm4iOiJ1cm46cHVibGljaWQ6SUROK2lsYWJ0LmltZWMuYmUrdXNlcitrY2hpYm91YiIsInByb2plY3RfdXJucyI6W10sImVtYWlsIjoia2FvdXRhci5jaGlib3ViQGlucmlhLmZyIiwicHVibGljX3NzaF9rZXkiOiJzc2gtcnNhIEFBQUFCM056YUMxeWMyRUFBQUFEQVFBQkFBQUJBUURFcGNNdmkydlgrVFU2U2tTc3FDMHJvMnBHckMxK2laSCtqVjJid2s1MXZIRzlaVXJQeE0va1hwYnR4UnNpaVM5bzRrRU1Jd1FRbVNIWlRQbzVUdXFzak5ZcW5LTVdWeXJXZmo5ZkgxcENqNFVQSGxxL05OTVpZVUdLK2NpMFpMbjAvTk1OMzBhMHVXMlBjeFdLQXNQQms0MUp6WUFEZGFkb3M3VlBGa29KL3NGYldobkM0SnV6SmF2NUE5SUNvWlY0U2Rjc29oYjZUVWZwbnk2QUpMNEw4Y1hmYmpLTnhGVHRLeW1UeHZHeHBNRkRqQjIxelVLcjl5d3F6QUQvMFd6Sy9uL1U5ZERXeGJsaHpFTTA2OG5rY2RnM080YnY2dkd1RzhzUXl0MlFjOGhLT2Q4YTh4SCsxMFdocHUwRnNiQ3NmN25aQkFTanZsRjR4aXNRMU5hMyJ9.mNk3bI0_uIMSfMWzp1v8hM6nVH_fXi6zFQfdWkVnPLbBRvw2D0Lo04q4ON2uvGDpSU45ARYNT7IZWw33TkSVng"
-
 	// Parse the JWT.
 	tok, err := jwt.Parse(token, jwks.Keyfunc, jwt.WithValidMethods(algos))
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok && ve.Errors == jwt.ValidationErrorExpired {
-			log.Println("The token is expired.")
-			return false
+			e := fmt.Errorf("the token is expired")
+			return TOKEN_EXPIRED, e
 		}
-		log.Printf("Failed to parse the JWT.\nError: %s", err.Error())
-		return false
+		e := fmt.Errorf("failed to parse the JWT %s", err.Error())
+		return PARSE_ERROR, e
 	}
 	// Check if the token is valid based on the JWKS object.
 	if !tok.Valid {
-		log.Println("The token is not valid.") // Either malformed or failed signature validation
-		return false
+		e := fmt.Errorf("the token is not valid") // Either malformed or failed signature validation
+		return INVALID_TOKEN, e
+
 	}
 
-	//log.Println("The token is valid.")
-	return true
+	return OK, nil
 }
 
-func CheckTokenExpiry(tokenExpiryCh chan<- bool, expiration time.Time) {
-	// Create a ticker to check the token expiration every 5 minutes.
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
+// func CheckTokenExpiry(tokenExpiryCh chan<- bool, expiration time.Time) {
+// 	// Create a ticker to check the token expiration every 5 minutes.
+// 	ticker := time.NewTicker(5 * time.Minute)
+// 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			// Check the remaining time until the token expires.
-			remainingTime := time.Until(expiration)
+// 	for {
+// 		select {
+// 		case <-ticker.C:
+// 			// Check the remaining time until the token expires.
+// 			remainingTime := time.Until(expiration)
 
-			// If the remaining time is less than or equal to 10 minutes (600 seconds),
-			// send a notification to the main goroutine.
-			if remainingTime <= 10*time.Minute {
-				tokenExpiryCh <- true
-				return
-			}
-		}
-	}
-}
+// 			// If the remaining time is less than or equal to 10 minutes (600 seconds),
+// 			// send a notification to the main goroutine.
+// 			if remainingTime <= 10*time.Minute {
+// 				tokenExpiryCh <- true
+// 				return
+// 			}
+// 		}
+// 	}
+// }
