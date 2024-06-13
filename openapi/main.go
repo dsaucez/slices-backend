@@ -12,6 +12,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type BackendServer struct {
+	Server   *http.Server
+	Router   *mux.Router
+	serverId string
+}
+
 var (
 	basePath = os.Getenv("BASE_PATH")
 	port     = os.Getenv("PORT")
@@ -27,35 +33,45 @@ func init() {
 	setDefaults()
 }
 
-func main() {
-	var serverId string = uuid.New().String() // generate a UUID
-
+func (backend *BackendServer) Initialize() {
 	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
 	server := api.NewServer()
 
-	r := mux.NewRouter()
-	r = r.PathPrefix(basePath).Subrouter()
+	backend.Router = mux.NewRouter()
+	backend.Router = backend.Router.PathPrefix(basePath).Subrouter()
 
 	// Authentication
-	r.Use(api.AuthMiddleware)
+	backend.Router.Use(api.AuthMiddleware)
 	// RBAC
-	r.Use(api.RoleMiddleware)
+	backend.Router.Use(api.RoleMiddleware)
 
 	// get an `http.Handler` that we can use
-	handler := api.HandlerFromMux(server, r)
+	handler := api.HandlerFromMux(server, backend.Router)
 
 	addr := ":" + port
-	srv := &http.Server{
+	backend.Server = &http.Server{
 		Handler:      handler,
 		Addr:         addr,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+}
 
-	log.SetPrefix("server " + serverId + " ")
-	log.Println("Started")
+func (backend *BackendServer) Run() {
+
+	log.Println("Starting")
 	log.Println("Listen on port " + port)
 	log.Println("Base path " + basePath)
 
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(backend.Server.ListenAndServe())
+}
+
+func main() {
+	var backend BackendServer
+
+	backend.serverId = uuid.New().String() // generate a UUID
+
+	log.SetPrefix("server " + backend.serverId + " ")
+	backend.Initialize()
+	backend.Run()
 }
