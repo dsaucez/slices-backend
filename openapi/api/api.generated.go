@@ -274,6 +274,9 @@ type PostCoreJSONRequestBody = CoreParams
 // PostCoreIdUEJSONRequestBody defines body for PostCoreIdUE for application/json ContentType.
 type PostCoreIdUEJSONRequestBody = UE
 
+// PostCoreIdUPFJSONRequestBody defines body for PostCoreIdUPF for application/json ContentType.
+type PostCoreIdUPFJSONRequestBody = Upf
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Redirection to the OIDC URL to generate authentication code
@@ -300,6 +303,9 @@ type ServerInterface interface {
 	// List all cores
 	// (GET /cores/)
 	GetCores(w http.ResponseWriter, r *http.Request, params GetCoresParams)
+	// Health check
+	// (GET /healthz)
+	GetHealthz(w http.ResponseWriter, r *http.Request)
 	// Logout the user
 	// (GET /logout)
 	GetLogout(w http.ResponseWriter, r *http.Request, params GetLogoutParams)
@@ -656,6 +662,21 @@ func (siw *ServerInterfaceWrapper) GetCores(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// GetHealthz operation middleware
+func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHealthz(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // GetLogout operation middleware
 func (siw *ServerInterfaceWrapper) GetLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -882,6 +903,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/core/{id}/UPF", wrapper.PostCoreIdUPF).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/cores/", wrapper.GetCores).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/healthz", wrapper.GetHealthz).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/logout", wrapper.GetLogout).Methods("GET")
 

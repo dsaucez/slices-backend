@@ -9,6 +9,17 @@ servers:
     description: Local Dev server
 
 paths:
+  /healthz:
+    get:
+      summary: Health check
+      description: Health check
+      responses:
+        '200':    # status code
+          description: The API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Empty"
   /authentication:
     get:
       summary: Redirection to the OIDC URL to generate authentication code
@@ -208,7 +219,7 @@ paths:
             $ref: '#/components/schemas/token'
       requestBody:
         content:
-          application/yaml:
+          application/json:
             schema:
               $ref: '#/components/schemas/Upf'
 
