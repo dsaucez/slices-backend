@@ -1,0 +1,243 @@
+openapi: 3.0.1
+info:
+  title: Converge CVRSCF API
+  description: The CVRSCF is responsible for managing and orchestrating
+               simulation experiments within the CONVERGE anechoic chamber
+  version: 1.0.0
+
+servers:
+  - url: https://chamber.converge-project.eu//api/v1
+    description: Chamber server
+
+paths:
+  /experiment-setup/3dmodel/{experiment-id}:
+    post:
+      summary: Set the 3D model of the environment 
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/3dModel'
+      responses:
+        '200':    # status code
+          description: 3D model has been set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/3dModel'
+
+  /experiment-setup/datatrafficmodel/{experiment-id}:
+    post:
+      summary: Set the data traffic model 
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataTrafficModel'
+      responses:
+        '200':    # status code
+          description: Data traffic model has been set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataTrafficModel'
+
+  /experiment-setup/antenna/{experiment-id}:
+    post:
+      summary: Set antenna characteristic
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AntennaCharacteristic'
+      responses:
+        '200':    # status code
+          description: Antenna characteristic has been set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AntennaCharacteristic'
+
+  /experiment-setup/mobility/{experiment-id}:
+    post:
+      summary: Set antenna characteristic
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobilityModel'
+      responses:
+        '200':    # status code
+          description: Mobility model has been set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobilityModel'
+
+  /experiment-status/channel/{experiment-id}:
+    get:
+      summary: Get delay, phase shift, and path loss 
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelMeasurement'
+      responses:
+        '200':    # status code
+          description: Set antenna characteristic has been set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMeasurement'
+
+  /experiment-status/flows/{experiment-id}:
+    get:
+      summary: Get bit rate, bit error rate, and delay 
+      parameters:
+        - "in": path
+          name: experiment-id
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelMeasurement'
+      responses:
+        '200':    # status code
+          description: Flows bit rate, bit error rate, and delay 
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataFlow'
+
+components:
+  schemas:
+    # == Atomic schemas ========================================================
+    Bitrate:
+      type: number
+
+    Pathloss:
+      type: number
+
+    FlowId:
+      description: To be defined
+      type: object
+
+    BitErrorRate:
+      type: number
+
+    Delay:
+      type: number
+
+    Phase:
+      type: number
+
+    Distance:
+      type: number
+
+    uuid:
+      type: string
+      example: "949c72df-6597-4273-ab4b-aa6d766b9c95"
+
+    Position:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+
+    # == Model objects ============================================================
+
+    Raytracing:
+      type: object
+      description: To be defined
+
+    Modulation:
+      type: object
+      description: To be defined
+
+    3dModel:
+      type: object
+      description: To be defined
+
+    DataTrafficModel:
+      type: object
+      description: To be defined
+
+    AntennaCharacteristic:
+      type: object
+      description: To be defined
+
+    MobilityModel:
+      type: object
+      description: To be defined
+
+    ChannelMeasurement:
+      type: object
+      properties:
+          delay:
+            $ref: '#/components/schemas/Delay'
+          phaseShift:
+            $ref: '#/components/schemas/Phase'
+          pathLoss:
+            $ref: '#/components/schemas/Pathloss'
+
+    DataFlow:
+      type: object
+      properties:
+          flowid:
+            $ref: '#/components/schemas/FlowId'
+          delay:
+            $ref: '#/components/schemas/Delay'
+          bitRate:
+            $ref: '#/components/schemas/Bitrate'
+          bitErrorRate:
+            $ref: '#/components/schemas/BitErrorRate'
+
+    PropagationModel:
+        type: string
+        description: To be defined
+        enum:
+          - modelA
+          - modelB
