@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,8 @@ import (
 var backend BackendServer
 
 var token string
+
+var coreid string
 
 func init() {
 	token = os.Getenv("TOKEN")
@@ -45,15 +48,6 @@ func TestHealthz(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/healthz", nil)
 	response := executeRequest(req, false)
 
-	checkResponseCode(t, http.StatusOK, response.Code)
-}
-
-func TestCores(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/cores/", nil)
-
-	response := executeRequest(req, true)
-
-	fmt.Println(response.Body)
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
@@ -91,16 +85,72 @@ func TestPostCore(t *testing.T) {
 
 	response := executeRequest(req, true)
 
+	var res map[string]any
+	err := json.Unmarshal(response.Body.Bytes(), &res)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// get the id of the core just created
+	coreid = res["uuid"].(string)
+
 	checkResponseCode(t, http.StatusCreated, response.Code)
 }
 
-func TestCores2(t *testing.T) {
+func TestGetCore(t *testing.T) {
+	uri := fmt.Sprintf("/core/%s", coreid)
+	req, _ := http.NewRequest("GET", uri, nil)
+
+	response := executeRequest(req, true)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+}
+
+func TestCores(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/cores/", nil)
 
 	response := executeRequest(req, true)
 
+	var res map[string]any
+	err := json.Unmarshal(response.Body.Bytes(), &res)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// the core must be present
+	if _, ok := res[coreid]; !ok {
+		t.Errorf("core %s not found\n", coreid)
+	}
+
 	fmt.Println(response.Body)
 	checkResponseCode(t, http.StatusOK, response.Code)
+}
+
+func TestStopCore(t *testing.T) {
+	uri := fmt.Sprintf("/core/%s?action=stop", coreid)
+	req, _ := http.NewRequest("GET", uri, nil)
+
+	response := executeRequest(req, true)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+}
+
+func TestDeleteCore(t *testing.T) {
+	uri := fmt.Sprintf("/core/%s", coreid)
+	req, _ := http.NewRequest("DELETE", uri, nil)
+
+	response := executeRequest(req, true)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+}
+
+func TestGetCoreNotFound(t *testing.T) {
+	uri := fmt.Sprintf("/core/%s", coreid)
+	req, _ := http.NewRequest("GET", uri, nil)
+
+	response := executeRequest(req, true)
+
+	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
 func TestLougout(t *testing.T) {
