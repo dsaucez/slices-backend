@@ -40,10 +40,10 @@ func (backend *BackendServer) Initialize() {
 	backend.Router = mux.NewRouter()
 	backend.Router = backend.Router.PathPrefix(basePath).Subrouter()
 
-	// Authentication
-	backend.Router.Use(api.AuthMiddleware)
-	// RBAC
-	backend.Router.Use(api.RoleMiddleware)
+	// // Authentication
+	// backend.Router.Use(api.AuthMiddleware)
+	// // RBAC
+	// backend.Router.Use(api.RoleMiddleware)
 
 	// get an `http.Handler` that we can use
 	handler := api.HandlerFromMux(server, backend.Router)

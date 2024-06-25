@@ -32,9 +32,36 @@ https://portal.slices-sc.eu/oauth/authorize)
 
 `JWKS_URI` source of JWKS knowledge (e.g., `https://portal.slices-sc.eu/.well-known/jwks.json`).
 
-## Start the server
+`PROVIDER_METADATA_URL` OIDC provider metadata (e.g., https://portal.slices-sc.eu/.well-known/openid-configuration)
 
-### In a local development environement
+`SCOPE` OIDC scope to retrieve  (e.g., "openid userinfo")
+
+`BACKEND_URL` backend URI covered by the (reverse) proxy (e.g., http://192.0.2.1:8888/)
+
+## Start the backend
+
+To decouple the API implementation and the authentication we use a reverse proxy.
+The proxy is in charge of dealing with OIDC and it hides the actual server from the public.
+
+Clients access the proxy, not the actual server.
+
+### Start the proxy
+
+Build the image
+
+```bash
+docker build -t slices-backend-proxy proxy/
+```
+
+start the proxy
+
+```bash
+docker run -dit --name slices-backend-proxy-instance --env-file env.list -p 8008:80 -v "$PWD/proxy":/usr/local/apache2/htdocs/ -v "$PWD/proxy/conf":/usr/local/apache2/conf  slices-backend-proxy
+```
+
+### Start the backend server
+
+#### In a local development environement
 
 ```bash
 go get -d -v .
@@ -42,7 +69,10 @@ go get -d -v .
 find . -name "*.go" | entr -r go run main.go
 ```
 
-### In a Docker container
+> [!IMPORTANT]  
+> Do not forget to properly set all environment variables before launching this command.
+
+#### In a Docker container
 
 Build the image
 
@@ -54,7 +84,11 @@ Build the image
  variable list file `env.list`, then run the following command:
 
  ```
- docker run --env-file env.list --rm -d -p 8008:8008  slices-backend
+ docker run --env-file env.list --rm -d -p 8888:8008  slices-backend
  ```
 
+> [!WARNING]  
+> Make sure that the export server port and the IP address to which the server
+> is bound is in adequation with the content of the `BACKEND_URL` environement
+> variable used by the proxy.
 

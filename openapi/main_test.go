@@ -122,7 +122,6 @@ func TestCores(t *testing.T) {
 		t.Errorf("core %s not found\n", coreid)
 	}
 
-	fmt.Println(response.Body)
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
