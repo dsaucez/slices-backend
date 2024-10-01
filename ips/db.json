@@ -4,11 +4,7 @@
     "reserved_ips": {}
   },
   "central": {
-    "prefix": "192.0.2.128/28",
-    "reserved_ips": {}
-  },
-  "uth": {
-    "prefix": "192.0.2.128/28",
+    "prefix": "172.29.7.192/26",
     "reserved_ips": {}
   }
 }

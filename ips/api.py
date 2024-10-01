@@ -7,7 +7,7 @@ from ipaddr import IPAddress
 import json
 
 def load_db(dbfile='/db.json'):
-    with open('db.json', 'r') as json_file:
+    with open(dbfile, 'r') as json_file:
         loaded_db = json.load(json_file)
     return loaded_db
 
