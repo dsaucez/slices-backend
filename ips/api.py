@@ -4,7 +4,7 @@ from fastapi.security import APIKeyHeader
 from pydantic import IPvAnyAddress
 from datetime import datetime, timedelta, timezone
 import ip as iplib
-from ipaddr import IPAddress
+from ipaddr import IPAddress, IPv4Network
 import json
 
 # == API KEY ===================================================================
@@ -117,8 +117,8 @@ async def get_ip(cluster: ClusterNames):
         cluster (ClusterNames): The name of the cluster from which to reserve an IP.
 
     Returns:
-        dict: A dictionary containing the reserved IP address, its expiration time, 
-        and the associated cluster name.
+        dict: A dictionary containing the reserved IP address, its prefix length,
+        its expiration time, and the associated cluster name.
 
     Raises:
         HTTPException: If no available IP address can be reserved from the pool, 
@@ -128,6 +128,7 @@ async def get_ip(cluster: ClusterNames):
     reserved_ips = db_cluster["reserved_ips"]
 
     pool = iplib.generate_ip_pool(db_cluster['prefix'])
+    prefix = IPv4Network(db_cluster['prefix'])
 
     for ip, infos in reserved_ips.items():
         pool.discard(infos["ip"])
@@ -139,6 +140,7 @@ async def get_ip(cluster: ClusterNames):
     
     entry= {
         "ip": reserved_ip,
+        "prefixlen": prefix.prefixlen,
         "expiration": expiration_time()
         }
     db_cluster['reserved_ips'][str(reserved_ip)] = entry
