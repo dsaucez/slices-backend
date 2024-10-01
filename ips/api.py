@@ -1,10 +1,30 @@
 from enum import Enum
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Security, status
+from fastapi.security import APIKeyHeader
 from pydantic import IPvAnyAddress
 from datetime import datetime, timedelta, timezone
 import ip as iplib
 from ipaddr import IPAddress
 import json
+
+# == API KEY ===================================================================
+import jwt
+api_key_header = APIKeyHeader(name="Bearer")
+
+def validate_token(token: str = Security(api_key_header)):
+    decoded = jwt.decode(token, options={'verify_signature': False})
+    # TBD check that it is correct!!!
+    
+    # Check if not expired
+    current_time = datetime.now(timezone.utc)
+    if current_time > datetime.fromtimestamp(decoded['exp'], timezone.utc):
+        raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has expired",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+    return decoded
+# ==============================================================================
 
 def load_db(dbfile='/db.json'):
     with open(dbfile, 'r') as json_file:
@@ -14,9 +34,7 @@ def load_db(dbfile='/db.json'):
 db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
-
-
-app = FastAPI()
+app = FastAPI(dependencies=[Depends(validate_token)])
 
 def expiration_time(delta=1):
     """
