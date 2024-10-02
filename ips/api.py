@@ -150,3 +150,9 @@ async def get_ip(cluster: ClusterNames):
 @app.get("/db/")
 async def get_db():
     return {"db": db}
+
+@app.get("/reset/")
+async def get_reset():
+    global db
+    db = load_db()
+    return {"db": db}
