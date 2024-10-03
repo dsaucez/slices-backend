@@ -1,15 +1,53 @@
 from enum import Enum
-from fastapi import FastAPI, HTTPException, Depends, Security, status
+from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
 from pydantic import IPvAnyAddress
 from datetime import datetime, timedelta, timezone
 import ip as iplib
 from ipaddr import IPAddress, IPv4Network
 import json
+from typing import List
+import itertools
+from starlette.responses import StreamingResponse
+from io import StringIO
+from io import BytesIO
+import zipfile
+
+
+
+import pos
 
 # == API KEY ===================================================================
 import jwt
 api_key_header = APIKeyHeader(name="Bearer")
+
+def check_role(allowed_roles: List[str]):
+    """
+    Creates a dependency that checks if the user has the required role(s).
+
+    This function generates a role checker that validates whether the
+    current user's role matches any of the allowed roles passed to the function.
+
+    Args:
+        allowed_roles (List[str]): A list of roles that are allowed access.
+
+    Returns:
+        function: A FastAPI dependency that checks user roles.
+
+    Raises:
+        HTTPException: If the user's role is not found among the allowed roles, 
+        it raises a 403 Forbidden error.
+    """
+    def role_checker(info: dict = Depends(validate_token)):
+        roles = [db["_roles"][role] for role in allowed_roles]
+        users = list(set(itertools.chain(*roles)))
+        if info["preferred_username"] not in users:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have the required role"
+            )
+        return info
+    return role_checker
 
 def validate_token(token: str = Security(api_key_header)):
     decoded = jwt.decode(token, options={'verify_signature': False})
@@ -27,6 +65,22 @@ def validate_token(token: str = Security(api_key_header)):
 # ==============================================================================
 
 def load_db(dbfile='/db.json'):
+    """
+    Loads and returns the content of a JSON database file.
+
+    This function opens the specified JSON file and returns its content as a
+    dictionary. If no file name is specified, it defaults to '/db.json'.
+
+    Args:
+        dbfile (str): The path to the JSON file to be loaded. Defaults to '/db.json'.
+
+    Returns:
+        dict: The database. 
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+        json.JSONDecodeError: If the file contents cannot be decoded into valid JSON.
+    """
     with open(dbfile, 'r') as json_file:
         loaded_db = json.load(json_file)
     return loaded_db
@@ -34,6 +88,7 @@ def load_db(dbfile='/db.json'):
 db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
+
 app = FastAPI(dependencies=[Depends(validate_token)])
 
 def expiration_time(delta=1):
@@ -57,7 +112,7 @@ def expiration_time(delta=1):
     return one_hour_later
 
 @app.delete("/ip/{cluster}/{ipaddress}")
-async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress):
+async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict = Depends(check_role(["admin"]))):
     """
     Delete a reserved IP address from a specified cluster.
 
@@ -107,7 +162,7 @@ async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress):
     return res | {'cluster': cluster}
 
 @app.get("/ip/{cluster}")
-async def get_ip(cluster: ClusterNames):
+async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]))):
     """
     Reserve an IP address from a pool for a given cluster.
 
@@ -148,11 +203,52 @@ async def get_ip(cluster: ClusterNames):
     return entry | {"cluster": cluster}
 
 @app.get("/db/")
-async def get_db():
+async def get_db(user: dict = Depends(check_role(["admin", "user"]))):
     return {"db": db}
 
 @app.get("/reset/")
-async def get_reset():
+async def get_reset(user: dict = Depends(check_role(["admin"]))):
     global db
     db = load_db()
     return {"db": db}
+
+@app.post("/pos/script/{deploy_node}")
+async def post_pos_script(deploy_node: str, user: dict = Depends(check_role(["user"]))):
+    # generate the inventory
+    inventory = pos.generate_inventory(deploy_node=deploy_node)
+
+    # generate the Ansible playbook
+    playbook = pos.generate_playbook()
+
+    # generate the Ansible playbook
+    playbook_5g = pos.generate_playbook_5g()
+
+    # generate the exectution script
+    deploy = pos.generate_script(deploy_node=deploy_node)
+
+    # Create a nice Zip file
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+        zip_file.writestr("pos/deploy.sh", deploy)
+        zip_file.writestr("pos/provision.yaml", playbook)
+        zip_file.writestr("pos/5g.yaml", playbook_5g)
+        zip_file.writestr("pos/hosts", inventory)
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        zip_buffer, 
+        media_type="application/x-zip-compressed", 
+        headers={"Content-Disposition": "attachment; filename=pos.zip"}
+    )
+
+
+
+#     file_like = StringIO(pos.generate_script(deploy_node=deploy_node))
+#     return StreamingResponse(file_like, media_type="text/plain", headers={"Content-Disposition": "attachment; filename=deploy.sh"})
+#     # return Response(content=pos.generate_script(deploy_node=deploy_node), media_type="text/plain")
+
+# @app.post("/pos/inventory/{deploy_node}")
+# async def post_pos_inventory(deploy_node: str, user: dict = Depends(check_role(["user"]))):
+#     file_like = StringIO(pos.generate_inventory(deploy_node=deploy_node))
+#     return StreamingResponse(file_like, media_type="text/yaml", headers={"Content-Disposition": "attachment; filename=hosts"})
+#     # return Response(content=pos.generate_inventory(deploy_node=deploy_node), media_type="text/plain")

@@ -1,0 +1,106 @@
+#!/bin/bash -ex
+XP={{ demo_name }}
+USER={{ k8s_user }}
+
+DIR=$(dirname $(realpath "$0"))
+RESULTS_DIR=/srv/testbed/results/
+
+rm -rf "$DIR/.venv"
+python3 -m venv "$DIR/.venv"
+source "$DIR/.venv/bin/activate"
+pip install -r requirements.txt
+pip install slices-cli --extra-index-url=https://doc.slices-ri.eu/pypi/
+
+slices project use {{ project }}
+TOKEN=$(slices auth id-token n5qsyXbYTeI89uVG3XLmYr2r)
+
+ansible-vault decrypt  --vault-pass-file password  pos/secrets.yaml
+sed -i "/^  token:/c\  token: ${TOKEN}" pos/secrets.yaml
+ansible-vault encrypt  --vault-pass-file password  pos/secrets.yaml
+chmod a+r pos/secrets.yaml
+
+# this exists due to a bug in ansible...
+export LC_ALL="C.UTF-8"
+
+IMAGE="ubuntu-jammy"
+POS=pos
+
+DEPLOY_NODE={{ deploy_node }}
+
+
+$POS allocations free -k $DEPLOY_NODE
+$POS allocations allocate --result-folder "$XP" $DEPLOY_NODE
+$POS nodes image $DEPLOY_NODE $IMAGE
+
+$POS nodes reset $DEPLOY_NODE &
+
+wait
+
+# 0. Prepare deployment node
+pos commands launch $DEPLOY_NODE mkdir pos
+ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
+
+## secret files
+$POS nodes copy --dest pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
+$POS nodes copy --dest pos/password $DEPLOY_NODE  pos/password
+
+# experiment files
+$POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
+$POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
+$POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
+
+# $POS nodes copy --dest reference_implementation/pos/xp.sh $DEPLOY_NODE  pos/xp.sh
+# $POS nodes copy --dest reference_implementation/pos/xp.yaml $DEPLOY_NODE  pos/xp.yaml
+
+# $POS nodes copy --dest clean.sh $DEPLOY_NODE  pos/clean.sh
+
+$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/$USER/config-$USER
+$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
+
+ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" -i pos/hosts pos/provision.yaml
+
+# Deploy the 5G network
+ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/secrets.yaml" --vault-password-file pos/password --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
+
+# copy all necessary files
+$POS nodes copy --dest reference_implementation/pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
+$POS nodes copy --dest reference_implementation/pos/password $DEPLOY_NODE  pos/password
+$POS nodes copy --dest reference_implementation/pos/params.yaml $DEPLOY_NODE  pos/params.yaml
+$POS nodes copy --dest reference_implementation/pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
+
+$POS nodes copy --dest reference_implementation/pos/xp.sh $DEPLOY_NODE  pos/xp.sh
+$POS nodes copy --dest reference_implementation/pos/xp.yaml $DEPLOY_NODE  pos/xp.yaml
+
+$POS nodes copy --dest clean.sh $DEPLOY_NODE  pos/clean.sh
+
+$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/$USER/config-$USER
+$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
+
+# 1. Create the cluster
+###DD$POS commands launch $DEPLOY_NODE --infile "pos/cluster.sh" --verbose --name "cluster.sh"
+
+# 2. Prepare a control machine with k8s client
+$POS commands launch $DEPLOY_NODE --infile "pos/prepare.sh" --verbose --name "prepare.sh"
+
+# 3. Deploy 5G
+$POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
+
+# 4. Run the experiment
+$POS commands launch $DEPLOY_NODE --infile "pos/xp.sh" --verbose --name "xp.sh"
+
+# 5. Publish results
+ALLOC_ID=$( $POS allocations show $DEPLOY_NODE | jq -r .id )
+RESULTS_FOLDER=$RESULTS_DIR/$($POS allocations show $ALLOC_ID | jq -r .result_folder)
+
+RESULTS_SIZE=$(du -s $RESULTS_FOLDER | cut -f 1)
+POS_SIZE=$(du -s pos | cut -f 1)
+ARTIFACT_SIZE=$(( $RESULTS_SIZE + $POS_SIZE ))
+echo $ARTIFACT_SIZE
+echo $RESULTS_FOLDER
+
+tar -cvvzf dataset.tar.gz pos -C $RESULTS_FOLDER . 
+
+$POS nodes copy --recursive --dest mini-dmi $DEPLOY_NODE ~/mini-dmi
+$POS nodes copy --recursive --dest mini-dmi/storage-client-playground/ $DEPLOY_NODE dataset.tar.gz
+
+ansible-playbook -i pos/inventory --extra-vars "@pos/params.yaml" --extra-vars "@pos/params.dmi.yaml"  --extra-vars "artifact_size=${ARTIFACT_SIZE}" --extra-vars "@pos/secrets.yaml" --vault-password-file pos/password dmi.yaml

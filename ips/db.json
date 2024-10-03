@@ -1,4 +1,14 @@
 {
+  "_roles": {
+    "admin": [
+      "dsaucezi"
+    ],
+    "user": [
+      "dsaucezi",
+      "nono"
+    ],
+    "guest": []
+  },
   "sophia": {
     "prefix": "172.28.7.192/26",
     "reserved_ips": {}

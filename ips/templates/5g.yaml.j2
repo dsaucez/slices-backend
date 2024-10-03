@@ -1,0 +1,13 @@
+- name: Deploy Core, RAN, and UE
+  hosts: all
+
+  roles:
+  - role: 5g/base
+  - role: 5g/core
+    when: GCN.core.present | default(false)
+  - role: 5g/flexric
+    when: GCN.flexric.present | default(false)
+  - role: 5g/ran
+    when: GCN.RAN.present | default(false)
+  - role: 5g/ue
+    when: GCN.UE.present | default(false)

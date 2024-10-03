@@ -1,0 +1,8 @@
+all:
+  children:
+    deploy:
+      hosts:
+        {{ deploy_node }}:
+          ansible_ssh_common_args: '-o StrictHostKeyChecking=no -oKexAlgorithms=+diffie-hellman-group1-sha1'
+          ansible_ssh_private_key_file: /srv/ssh/general_ssh_key
+          ansible_user: root

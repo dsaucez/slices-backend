@@ -1,0 +1,27 @@
+---
+- name: Provision deployment node
+  hosts: deploy
+
+  roles:
+  - role: common
+  - role: docker
+  - role: k8s/base
+
+  tasks:
+  # - name: Copy private key
+  #   ansible.builtin.copy:
+  #     src: keys/id_rsa
+  #     dest: .ssh/id_rsa
+  #     mode: '0400'
+
+  - name: Retrieve reference implementation
+    ansible.builtin.git:
+      repo: https://gitlab.inria.fr/slices-ri/blueprints/post-5g/reference_implementation.git
+      dest: reference_implementation
+      version: develop
+      force: yes
+
+  - name: Prepare venv
+    ansible.builtin.shell: python3 -m venv ".venv" && . .venv/bin/activate && pip install -r requirements.txt && python3 -m pip install ansible-core==2.17.2 && ansible-galaxy install -r collections/requirements.yml
+    args:
+      chdir: reference_implementation
