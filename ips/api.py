@@ -14,7 +14,6 @@ from io import BytesIO
 import zipfile
 
 
-
 import pos
 
 # == API KEY ===================================================================
@@ -179,7 +178,17 @@ async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]
         HTTPException: If no available IP address can be reserved from the pool, 
         a 404 error is raised.
     """
-    db_cluster = db[cluster.name]
+    cluster_name = cluster.name
+
+    try:
+        res = get_ip_in_cluster(cluster_name)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))    
+
+    return res
+
+def get_ip_in_cluster(cluster_name):
+    db_cluster = db[cluster_name]
     reserved_ips = db_cluster["reserved_ips"]
 
     pool = iplib.generate_ip_pool(db_cluster['prefix'])
@@ -188,10 +197,7 @@ async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]
     for ip, infos in reserved_ips.items():
         pool.discard(infos["ip"])
 
-    try:
-        reserved_ip = iplib.pick_and_remove_ip(pool)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    reserved_ip = iplib.pick_and_remove_ip(pool)
     
     entry= {
         "ip": reserved_ip,
@@ -200,7 +206,7 @@ async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]
         }
     db_cluster['reserved_ips'][str(reserved_ip)] = entry
     
-    return entry | {"cluster": cluster}
+    return entry | {"cluster": cluster_name}
 
 @app.get("/db/")
 async def get_db(user: dict = Depends(check_role(["admin", "user"]))):
@@ -212,10 +218,13 @@ async def get_reset(user: dict = Depends(check_role(["admin"]))):
     db = load_db()
     return {"db": db}
 
-@app.post("/pos/script/{deploy_node}")
-async def post_pos_script(deploy_node: str, user: dict = Depends(check_role(["user"]))):
+@app.post("/pos/script/")
+async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
+    # deploy_node = data.deploy_node
+    # url = data.xp_url
+
     # generate the inventory
-    inventory = pos.generate_inventory(deploy_node=deploy_node)
+    inventory = pos.generate_inventory(data=data)
 
     # generate the Ansible playbook
     playbook = pos.generate_playbook()
@@ -224,17 +233,24 @@ async def post_pos_script(deploy_node: str, user: dict = Depends(check_role(["us
     playbook_5g = pos.generate_playbook_5g()
 
     # generate the exectution script
-    deploy = pos.generate_script(deploy_node=deploy_node)
+    deploy = pos.generate_script(data=data)
 
-    # Create a nice Zip file
+    # generate dmi parameters
+    dmi = pos.generate_dmi(data=data, user=user)
+
+    # Create a Zip file with all content
     zip_buffer = BytesIO()
+    # Add content to the zip file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
         zip_file.writestr("pos/deploy.sh", deploy)
         zip_file.writestr("pos/provision.yaml", playbook)
         zip_file.writestr("pos/5g.yaml", playbook_5g)
+        zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
-    zip_buffer.seek(0)
 
+    oai = pos.generate_oai(data=data, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
+    
+    zip_buffer.seek(0)
     return StreamingResponse(
         zip_buffer, 
         media_type="application/x-zip-compressed", 

@@ -1,6 +1,7 @@
 #!/bin/bash -ex
-XP={{ demo_name }}
-USER={{ k8s_user }}
+XP={{ name }}
+
+KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 
 DIR=$(dirname $(realpath "$0"))
 RESULTS_DIR=/srv/testbed/results/
@@ -37,27 +38,25 @@ $POS nodes reset $DEPLOY_NODE &
 wait
 
 # 0. Prepare deployment node
-pos commands launch $DEPLOY_NODE mkdir pos
+$POS commands launch $DEPLOY_NODE -- mkdir -p pos
+$POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
 
 ## secret files
-$POS nodes copy --dest pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
-$POS nodes copy --dest pos/password $DEPLOY_NODE  pos/password
+$POS nodes copy --dest .pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
+$POS nodes copy --dest .pos/password $DEPLOY_NODE  pos/password
 
 # experiment files
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
-$POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
-$POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
+#$POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
+#$POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 
-# $POS nodes copy --dest reference_implementation/pos/xp.sh $DEPLOY_NODE  pos/xp.sh
-# $POS nodes copy --dest reference_implementation/pos/xp.yaml $DEPLOY_NODE  pos/xp.yaml
+#$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/{{ k8s_user }}/config-{{ k8s_user }}
+#$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
 
-# $POS nodes copy --dest clean.sh $DEPLOY_NODE  pos/clean.sh
+ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
-$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/$USER/config-$USER
-$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
-
-ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" -i pos/hosts pos/provision.yaml
+pos commands launch $DEPLOY_NODE wget {{ xp_url }}
 
 # Deploy the 5G network
 ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/secrets.yaml" --vault-password-file pos/password --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
