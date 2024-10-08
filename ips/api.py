@@ -253,7 +253,12 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
 
-    oai = pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
+    try:
+        pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 
     zip_buffer.seek(0)
 
