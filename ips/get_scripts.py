@@ -3,9 +3,10 @@ import argparse
 import boto3
 from botocore.client import Config
 import json
+import os
 
 def get_experiment(experiment: str, credentials: str):
-  with open(args.credentials, 'r') as json_file:
+  with open(credentials, 'r') as json_file:
     credentials = json.load(json_file)
 
     bucket=credentials["bucket"]
@@ -16,7 +17,8 @@ def get_experiment(experiment: str, credentials: str):
                         aws_secret_access_key=credentials['secretKey'],
                         config=Config(signature_version='s3v4'))
 
-  s3.Bucket(bucket).download_file(f"{args.experiment}.zip", 'pos.zip')
+  os.makedirs(experiment, exist_ok=True)
+  s3.Bucket(bucket).download_file(f"{experiment}.zip", f'{experiment}/pos.zip')
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Get experiment scripts.")
