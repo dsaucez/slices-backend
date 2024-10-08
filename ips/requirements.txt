@@ -2,6 +2,7 @@ annotated-types==0.7.0
 anyio==4.6.0
 Babel==2.8.0
 bcrypt==3.2.2
+boto3==1.35.35
 certifi==2024.7.4
 cffi==1.17.0
 chardet==3.0.4

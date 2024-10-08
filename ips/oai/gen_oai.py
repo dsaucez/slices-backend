@@ -179,4 +179,3 @@ def build(data: dict, gip, zip_buffer):
     # createFile(content, item['output'])
     with zipfile.ZipFile(zip_buffer, "a") as zip_file:
       zip_file.writestr(item['output'], content)
-    print ("added")

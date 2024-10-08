@@ -12,7 +12,9 @@ from starlette.responses import StreamingResponse
 from io import StringIO
 from io import BytesIO
 import zipfile
-
+import boto3
+from botocore.client import Config
+import uuid
 
 import pos
 
@@ -220,23 +222,26 @@ async def get_reset(user: dict = Depends(check_role(["admin"]))):
 
 @app.post("/pos/script/")
 async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
+    # Generate an ID
+    id="{}-{}-{}".format(user["proj_name"], data.name, uuid.uuid4())
+
     # deploy_node = data.deploy_node
     # url = data.xp_url
 
     # generate the inventory
-    inventory = pos.generate_inventory(data=data)
+    inventory = pos.generate_inventory(data=data, user=user, id=id)
 
     # generate the Ansible playbook
-    playbook = pos.generate_playbook()
+    playbook = pos.generate_playbook(data=data, user=user, id=id)
 
     # generate the Ansible playbook
-    playbook_5g = pos.generate_playbook_5g()
+    playbook_5g = pos.generate_playbook_5g(data=data, user=user, id=id)
 
     # generate the exectution script
-    deploy = pos.generate_script(data=data)
+    deploy = pos.generate_script(data=data, user=user, id=id)
 
     # generate dmi parameters
-    dmi = pos.generate_dmi(data=data, user=user)
+    dmi = pos.generate_dmi(data=data, user=user, id=id)
 
     # Create a Zip file with all content
     zip_buffer = BytesIO()
@@ -248,23 +253,26 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
 
-    oai = pos.generate_oai(data=data, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
-    
+    oai = pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
+
     zip_buffer.seek(0)
-    return StreamingResponse(
-        zip_buffer, 
-        media_type="application/x-zip-compressed", 
-        headers={"Content-Disposition": "attachment; filename=pos.zip"}
-    )
 
+    credentials = load_db(dbfile="/credentials.json")
 
+    bucket=credentials["bucket"]
 
-#     file_like = StringIO(pos.generate_script(deploy_node=deploy_node))
-#     return StreamingResponse(file_like, media_type="text/plain", headers={"Content-Disposition": "attachment; filename=deploy.sh"})
-#     # return Response(content=pos.generate_script(deploy_node=deploy_node), media_type="text/plain")
+    s3 = boto3.resource('s3',
+                        endpoint_url=credentials['endpointUrl'],
+                        aws_access_key_id=credentials['accessKey'],
+                        aws_secret_access_key=credentials['secretKey'],
+                        config=Config(signature_version='s3v4'))
 
-# @app.post("/pos/inventory/{deploy_node}")
-# async def post_pos_inventory(deploy_node: str, user: dict = Depends(check_role(["user"]))):
-#     file_like = StringIO(pos.generate_inventory(deploy_node=deploy_node))
-#     return StreamingResponse(file_like, media_type="text/yaml", headers={"Content-Disposition": "attachment; filename=hosts"})
-#     # return Response(content=pos.generate_inventory(deploy_node=deploy_node), media_type="text/plain")
+    s3.Bucket(bucket).upload_fileobj(zip_buffer, f"{id}.zip")
+
+    return {"identifier": id}
+
+    # return StreamingResponse(
+    #     zip_buffer, 
+    #     media_type="application/x-zip-compressed", 
+    #     headers={"Content-Disposition": "attachment; filename=pos.zip"}
+    # )

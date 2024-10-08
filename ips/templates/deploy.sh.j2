@@ -28,7 +28,6 @@ POS=pos
 
 DEPLOY_NODE={{ deploy_node }}
 
-
 $POS allocations free -k $DEPLOY_NODE
 $POS allocations allocate --result-folder "$XP" $DEPLOY_NODE
 $POS nodes image $DEPLOY_NODE $IMAGE
