@@ -22,6 +22,20 @@ import pos
 import jwt
 api_key_header = APIKeyHeader(name="Bearer")
 
+def remove_expired():
+    for k, v in db["ips"].items():
+        ips  = v["reserved_ips"]
+
+        # get all expired IPs
+        expired = []
+        for ip, infos in ips.items():
+            if datetime.now(timezone.utc) > infos["expiration"]:
+                expired.append(ip)
+
+        # purge the expired IPs
+        for ip in expired:
+            del ips[ip]
+
 def check_role(allowed_roles: List[str]):
     """
     Creates a dependency that checks if the user has the required role(s).
@@ -92,25 +106,25 @@ ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
 app = FastAPI(dependencies=[Depends(validate_token)])
 
-def expiration_time(delta=1):
+def expiration_time(delta=60):
     """
     Calculate the expiration time in UTC.
 
     This function computes the current UTC time and adds a specified 
-    time delta (in hours) to it. The default delta is set to 1 hour.
+    time delta (in seconds) to it. The default delta is set to 60 seconds.
 
     Args:
-        delta (int, optional): The number of hours to add to the current 
-        UTC time. Defaults to 1.
+        delta (int, optional): The number of seconds to add to the current 
+        UTC time. Defaults to 60.
 
     Returns:
         datetime: A timezone-aware `datetime` object representing the 
         current UTC time plus the specified delta.
     """
     current_utc_time = datetime.now(timezone.utc)
-    one_hour_later = current_utc_time + timedelta(hours=delta)
+    later = current_utc_time + timedelta(seconds=delta)
 
-    return one_hour_later
+    return later
 
 @app.delete("/ip/{cluster}/{ipaddress}")
 async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict = Depends(check_role(["admin"]))):
@@ -154,7 +168,7 @@ async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict 
             "ip": "192.168.1.99"
         }
     """
-    db_cluster = db[cluster.name]
+    db_cluster = db["ips"][cluster.name]
     reserved_ips = db_cluster["reserved_ips"]
     try:
         res = reserved_ips.pop(str(ipaddress))
@@ -190,7 +204,7 @@ async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]
     return res
 
 def get_ip_in_cluster(cluster_name):
-    db_cluster = db[cluster_name]
+    db_cluster = db["ips"][cluster_name]
     reserved_ips = db_cluster["reserved_ips"]
 
     pool = iplib.generate_ip_pool(db_cluster['prefix'])
@@ -204,7 +218,7 @@ def get_ip_in_cluster(cluster_name):
     entry= {
         "ip": reserved_ip,
         "prefixlen": prefix.prefixlen,
-        "expiration": expiration_time()
+        "expiration": expiration_time(delta=3600)
         }
     db_cluster['reserved_ips'][str(reserved_ip)] = entry
     
@@ -224,6 +238,9 @@ async def get_reset(user: dict = Depends(check_role(["admin"]))):
 async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
     id="{}-{}-{}".format(user["proj_name"], data.name, uuid.uuid4())
+
+    # cleanup IP space
+    remove_expired()
 
     # deploy_node = data.deploy_node
     # url = data.xp_url
@@ -257,8 +274,6 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
-
-
 
     zip_buffer.seek(0)
 
