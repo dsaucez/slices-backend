@@ -9,16 +9,18 @@
     ],
     "guest": []
   },
-  "sophia": {
-    "prefix": "172.28.7.192/26",
-    "reserved_ips": {}
-  },
-  "central_multus": {
-    "prefix": "172.29.7.128/26",
-    "reserved_ips": {}
-  },
-  "central_lb": {
-    "prefix": "172.29.7.192/26",
-    "reserved_ips": {}
+  "ips": {
+    "sophia": {
+      "prefix": "172.28.7.192/26",
+      "reserved_ips": {}
+    },
+    "central_multus": {
+      "prefix": "172.29.7.128/26",
+      "reserved_ips": {}
+    },
+    "central_lb": {
+      "prefix": "172.29.7.192/26",
+      "reserved_ips": {}
+    }
   }
 }
