@@ -1,11 +1,13 @@
 {
   "_roles": {
     "admin": [
-      "dsaucezi"
+      "dsaucezi",
+      "nimakris"
     ],
     "user": [
       "dsaucezi",
-      "nono"
+      "nono",
+      "nimakris"
     ],
     "guest": []
   },
