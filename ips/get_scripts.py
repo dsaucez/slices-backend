@@ -5,6 +5,7 @@ from botocore.client import Config
 import json
 import zipfile
 import os
+from git import Repo
 
 def get_experiment(experiment: str, credentials: str):
   with open(credentials, 'r') as json_file:
@@ -36,6 +37,10 @@ if __name__ == "__main__":
   parser.add_argument('--credentials', type=str, help="Credentials file for accessing S3 storage", default='credentials.json')
 
   args = parser.parse_args()
+
+  repo_url = 'https://gitlab.inria.fr/slices-ri/blueprints/post-5g/reference_implementation.git'
+  clone_to_dir = args.experiment
+  Repo.clone_from(repo_url, clone_to_dir, branch="develop")
 
   get_experiment(experiment=args.experiment, credentials=args.credentials)
 

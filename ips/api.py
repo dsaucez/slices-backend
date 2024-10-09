@@ -260,15 +260,24 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
     # generate dmi parameters
     dmi = pos.generate_dmi(data=data, user=user, id=id)
 
+    xp = pos.generate_xp(data=data, user=user, id=id)
+
     # Create a Zip file with all content
     zip_buffer = BytesIO()
     # Add content to the zip file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
         zip_file.writestr("pos/deploy.sh", deploy)
+        zip_info = zip_file.getinfo("pos/deploy.sh")
+        zip_info.external_attr = 0o755 << 16
+
         zip_file.writestr("pos/provision.yaml", playbook)
         zip_file.writestr("pos/5g.yaml", playbook_5g)
         zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
+
+        zip_file.writestr("pos/get_xp.sh", xp)
+        zip_info = zip_file.getinfo("pos/get_xp.sh")
+        zip_info.external_attr = 0o755 << 16
 
     try:
         pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)

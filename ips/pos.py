@@ -1,6 +1,6 @@
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel
-import uuid
+import oai
 
 import oai.gen_oai
 
@@ -28,7 +28,7 @@ env = Environment(loader=FileSystemLoader(template_dir))
 
 def generate_script(data: PosScriptData, user: dict, id: str):
   template = env.get_template('deploy.sh.j2')  
-  script = template.render(dict(data) | {"k8s_user": user["preferred_username"]})
+  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] })
   
   return script
 
@@ -46,22 +46,24 @@ def generate_dmi(data: PosScriptData, user: dict, id: str):
   return dmi
 
 def generate_playbook_5g(data: PosScriptData, user: dict, id: str):
-  data = {}
-
   template = env.get_template('5g.yaml.j2')
   playbook = template.render(data)
 
   return playbook
 
 def generate_playbook(data: PosScriptData, user: dict, id: str):
-  data = {}
-
   template = env.get_template('provision.yaml.j2')
   playbook = template.render(data)
 
   return playbook
 
-import oai
 def generate_oai(data: PosScriptData, user: dict, id: str, gip, zip_buffer):
    oai.gen_oai.build(data = dict(data), gip=gip, zip_buffer=zip_buffer)
    return {}
+
+
+def generate_xp(data: PosScriptData, user: dict, id: str):
+  template = env.get_template('get_xp.sh.j2')
+  get_xp = template.render(data)
+
+  return get_xp

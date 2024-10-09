@@ -15,10 +15,11 @@ pip install slices-cli --extra-index-url=https://doc.slices-ri.eu/pypi/
 slices project use {{ project }}
 TOKEN=$(slices auth id-token n5qsyXbYTeI89uVG3XLmYr2r)
 
-ansible-vault decrypt  --vault-pass-file password  pos/secrets.yaml
-sed -i "/^  token:/c\  token: ${TOKEN}" pos/secrets.yaml
-ansible-vault encrypt  --vault-pass-file password  pos/secrets.yaml
-chmod a+r pos/secrets.yaml
+echo "token: $TOKEN" > pos/token
+# ansible-vault decrypt  --vault-pass-file password  $TOKEN_VAULT
+# sed -i "/^  token:/c\  token: ${TOKEN}" pos/secrets.yaml
+# ansible-vault encrypt  --vault-pass-file password  pos/secrets.yaml
+# chmod a+r pos/secrets.yaml
 
 # this exists due to a bug in ansible...
 export LC_ALL="C.UTF-8"
@@ -42,8 +43,9 @@ $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
 
 ## secret files
-$POS nodes copy --dest .pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
-$POS nodes copy --dest .pos/password $DEPLOY_NODE  pos/password
+$POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
+# $POS nodes copy --dest .pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
+# $POS nodes copy --dest .pos/password $DEPLOY_NODE  pos/password
 
 # experiment files
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
@@ -56,13 +58,15 @@ $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
 ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
 pos commands launch $DEPLOY_NODE wget {{ xp_url }}
+pos commands launch $DEPLOY_NODE wget {{ xp_url }}tar --strip-components=1 -xvvzf examples-simple_ping.tar.gz
+
 
 # Deploy the 5G network
-ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/secrets.yaml" --vault-password-file pos/password --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
+ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/token" --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
 
 # copy all necessary files
-$POS nodes copy --dest reference_implementation/pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
-$POS nodes copy --dest reference_implementation/pos/password $DEPLOY_NODE  pos/password
+# $POS nodes copy --dest reference_implementation/pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
+# $POS nodes copy --dest reference_implementation/pos/password $DEPLOY_NODE  pos/password
 $POS nodes copy --dest reference_implementation/pos/params.yaml $DEPLOY_NODE  pos/params.yaml
 $POS nodes copy --dest reference_implementation/pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 
