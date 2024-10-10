@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import argparse
 import argparse
 import boto3
@@ -10,6 +9,13 @@ import os
 from git import Repo
 
 import subprocess
+
+def prepare_dir(experiment_id: str, credentials: str):
+  dir=experiment_id
+
+  os.makedirs(dir, exist_ok=True)
+
+  return dir
 
 def run_bash_command(command, working_dir="."):
     # Open a subprocess to execute the command
@@ -30,9 +36,9 @@ def run_bash_command(command, working_dir="."):
         error_output = process.stderr.read()
         print(f"Error: {error_output.strip()}")
 
-def get_experiment(experiment_id: str, credentials: str):
+def get_experiment(experiment_id: str, credentials: str, dir: str):
   repo_url = 'https://gitlab.inria.fr/slices-ri/blueprints/post-5g/reference_implementation.git'
-  clone_to_dir = experiment_id
+  clone_to_dir = dir
   Repo.clone_from(repo_url, clone_to_dir, branch="develop")
 
   with open(credentials, 'r') as json_file:
@@ -46,11 +52,9 @@ def get_experiment(experiment_id: str, credentials: str):
                         aws_secret_access_key=credentials['secretKey'],
                         config=Config(signature_version='s3v4'))
 
-  dir=experiment_id
   s3_filename=f'{experiment_id}.zip'
   zip_file_path=f'{dir}/pos.zip'
 
-  os.makedirs(experiment_id, exist_ok=True)
   s3.Bucket(bucket).download_file(f"{s3_filename}", f'{zip_file_path}')
 
   if zipfile.is_zipfile(zip_file_path):
@@ -58,10 +62,10 @@ def get_experiment(experiment_id: str, credentials: str):
       zip_ref.extractall(dir)
 
 
-def launch_experiment(experiment_id, credentials):
+def launch_experiment(experiment_id, credentials, dir: str):
   # Functionality to "launch" the experiment
   print(f"Launching experiment with ID: {experiment_id} using credentials from {credentials}")
-  run_bash_command("pos/deploy.sh", working_dir=experiment_id)
+  run_bash_command("pos/deploy.sh", working_dir=dir)
 
 def main():
   parser = argparse.ArgumentParser(description='Experiment management commands.')
@@ -72,20 +76,15 @@ def main():
 
   args = parser.parse_args()
 
-
-  
+  dir = prepare_dir(experiment_id=args.experiment_id, credentials=args.credentials)
 
   if args.action == "get":
-    get_experiment(args.experiment_id, args.credentials)
+    get_experiment(experiment_id=args.experiment_id, credentials=args.credentials, dir=dir)
   elif args.action == "launch":
-    launch_experiment(args.experiment_id, args.credentials)
+    launch_experiment(experiment_id=args.experiment_id, credentials=args.credentials, dir=dir)
   else:
     print("Invalid action. Use 'get' or 'launch'.")
 
-
-
-
-  # get_experiment(experiment=args.experiment, credentials=args.credentials)
 
 
 
