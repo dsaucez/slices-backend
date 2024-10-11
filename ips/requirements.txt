@@ -24,6 +24,7 @@ markdown-it-py==3.0.0
 MarkupSafe==2.0.1
 mdurl==0.1.2
 netaddr==0.8.0
+paramiko==3.5.0
 pycparser==2.22
 pydantic==2.9.2
 pydantic_core==2.23.4

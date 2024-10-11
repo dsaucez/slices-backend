@@ -1,7 +1,8 @@
 from enum import Enum
 from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
-from pydantic import IPvAnyAddress
+from pydantic import IPvAnyAddress, BaseModel, Field, field_validator
+
 from datetime import datetime, timedelta, timezone
 import ip as iplib
 from ipaddr import IPAddress, IPv4Network
@@ -15,12 +16,54 @@ import zipfile
 import boto3
 from botocore.client import Config
 import uuid
+import paramiko
+import os
 
 import pos
 
 # == API KEY ===================================================================
 import jwt
 api_key_header = APIKeyHeader(name="Bearer")
+
+def get_s3_bucket():
+    credentials = load_db(dbfile="/credentials.json")
+
+    bucket=credentials["bucket"]
+
+    s3 = boto3.resource('s3',
+                        endpoint_url=credentials['endpointUrl'],
+                        aws_access_key_id=credentials['accessKey'],
+                        aws_secret_access_key=credentials['secretKey'],
+                        config=Config(signature_version='s3v4'))
+
+    bucket=credentials["bucket"]
+    s3_bucket = s3.Bucket(bucket)
+    return s3_bucket
+
+def run_ssh_command_with_key(hostname, port, username, key_path, command):
+    # Create a new SSH client
+    ssh = paramiko.SSHClient()
+
+    # Automatically add the host key if it's new
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    try:
+        # Connect to the server using an SSH key
+        # private_key = paramiko.RSAKey.from_private_key_file(key_path, password='Cu3skO2JawWLye6')
+        # ssh.connect(hostname, port=port, username=username, pkey=private_key)
+        ssh.connect(hostname, port=port, username=username, key_filename=key_path)
+
+        # Execute the command
+        stdin, stdout, stderr = ssh.exec_command(command)
+
+        # Get the output and error
+        output = stdout.read().decode()
+        error = stderr.read().decode()
+
+        return output, error
+    finally:
+        # Close the SSH connection
+        ssh.close()
 
 def remove_expired():
     for k, v in db["ips"].items():
@@ -286,22 +329,95 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
 
     zip_buffer.seek(0)
 
-    credentials = load_db(dbfile="/credentials.json")
-
-    bucket=credentials["bucket"]
-
-    s3 = boto3.resource('s3',
-                        endpoint_url=credentials['endpointUrl'],
-                        aws_access_key_id=credentials['accessKey'],
-                        aws_secret_access_key=credentials['secretKey'],
-                        config=Config(signature_version='s3v4'))
-
-    s3.Bucket(bucket).upload_fileobj(zip_buffer, f"{id}.zip")
+    s3_bucket = get_s3_bucket()
+    s3_bucket.upload_fileobj(zip_buffer, f"{id}.zip")
 
     return {"identifier": id}
 
-    # return StreamingResponse(
-    #     zip_buffer, 
-    #     media_type="application/x-zip-compressed", 
-    #     headers={"Content-Disposition": "attachment; filename=pos.zip"}
-    # )
+@app.get("/pos/script/{id}")
+async def get_pos_script(id: str):
+    try:
+        s3_bucket = get_s3_bucket()
+
+        dir = "xp"
+        os.makedirs("xp", exist_ok=True)
+
+        s3_filename=f'{id}.zip'
+        tempfile_path = f'{dir}/{s3_filename}'
+
+        s3_bucket.download_file(f"{s3_filename}", f'{tempfile_path}')
+
+        # Open the file in binary mode
+        file_like = open(tempfile_path, mode="rb")
+
+        # Return the file as a streaming response
+        return StreamingResponse(file_like, media_type="application/x-zip-compressed", 
+                                    headers={"Content-Disposition": f"attachment; filename={s3_filename}"})
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    finally:
+        # remove the temporary file
+        if os.path.exists(s3_filename):
+            os.remove(s3_filename)
+
+
+
+## R2LAB
+r2lab_devices = ["jaguar", "panther", "n300", "n320", "qhat01"]
+R2labDevices = Enum('name', {dev: dev for dev in r2lab_devices})
+
+class StateUpdate(BaseModel):
+    state: str = Field(..., description="State must be either 'ON' or 'OFF'")
+
+    @field_validator('state')  
+    def validate_state(cls, value):
+        # Convert the input value to uppercase for case-insensitive comparison
+        normalized_value = value.upper()
+        if normalized_value not in ["ON", "OFF"]:
+            raise ValueError("State must be either 'ON' or 'OFF'")
+        return normalized_value
+
+@app.patch("/r2lab/{device}/")
+async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict = Depends(check_role(["user"]))):
+    """
+    Change the power state of a specified R2Lab device.
+
+    This endpoint allows users to change the power state of a specific 
+    R2Lab device to either ON or OFF.
+
+    Parameters:
+    - **state_update**: StateUpdate
+        - Contains the state to set for the device. Must be either "ON" 
+          or "OFF".
+    - **device**: R2labDevices
+        - The specific device in the R2Lab whose power state will be 
+          modified.
+    - **user**: dict
+        - A dictionary representing the authenticated user, obtained 
+          from the `check_role` dependency to ensure the user has the 
+          correct permissions.
+
+    Returns:
+    - **JSON response** containing the output change in R2LAB structured as:
+      ```json
+      {
+          "output": "<r2lab_output>"
+      }
+      ```
+
+    Raises:
+    - **HTTPException**: If an error occurs while executing the command, 
+      the user will receive an appropriate HTTP error response.
+    """
+    normalized_state = state_update.state.upper()
+    if normalized_state == "ON":
+        cmd = f"rhubarbe pdu on {device.name}"
+    elif normalized_state == "OFF":
+        cmd = f"rhubarbe pdu off {device.name}"
+
+    output, error = run_ssh_command_with_key("faraday.inria.fr", 22, "inria_tum01", "/id_rsa", cmd)
+
+    return {"output": output}
+
+
+
