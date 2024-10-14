@@ -121,13 +121,14 @@ def render(environment, templatepath, gcn):
 
   slices = gcn['slices']
   dnns    = gcn['dnns']
+  ues = gcn.get('UEs', [])
 
   smf_info = smfInfo(gcn)
   plmn_support_list = plmnSupportList(gcn)
   served_guami_list = servedGuamiList(gcn)
 
   content = template.render(
-      ues     = gcn['UEs'],
+      ues     = ues,
       mcc     = gcn['mcc'],
       mnc     = gcn['mnc'],
       tac     = gcn['tac'],
