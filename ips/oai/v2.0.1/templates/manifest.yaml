@@ -7,6 +7,8 @@ templates:
   - template: oai-5g-core/oai-nrf/templates/service.yaml
     output: ./oai-cn5g-fed/charts/oai-5g-core/oai-nrf/templates/service.yaml
     render: false
+  - template: oai-5g-core/mysql/initialization/oai_db-basic.sql.j2
+    output: ./oai-cn5g-fed/charts/oai-5g-core/mysql/initialization/oai_db-basic.sql
   - template: oai-5g-ran/oai-gnb/values.yaml.j2
     output: ./oai-cn5g-fed/charts/oai-5g-ran/oai-gnb/values.yaml
   - template: oai-5g-ran/oai-du/values.yaml.j2
@@ -21,6 +23,8 @@ templates:
     output: ./oai-cn5g-fed/charts/oai-5g-ran/oai-nr-ue/values.yaml
   - template: oai-5g-ran/oai-gnb/templates/configmap.yaml
     output: ./oai-cn5g-fed/charts/oai-5g-ran/oai-gnb/templates/configmap.yaml
+  - template: oai-5g-ran/oai-du/templates/configmap.yaml
+    output: ./oai-cn5g-fed/charts/oai-5g-ran/oai-du/templates/configmap.yaml
   - template: oai-5g-ran/oai-gnb/templates/deployment.yaml
     output: ./oai-cn5g-fed/charts/oai-5g-ran/oai-gnb/templates/deployment.yaml
   # - template: oai-5g-ran/oai-cu-cp/templates/configmap.yaml

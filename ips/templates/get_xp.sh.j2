@@ -1,3 +1,5 @@
 #!/bin/bash
-wget -O xp.tar.gz {{ xp_url }}
-tar --strip-components=1 -xvvzf xp.tar.gz
+mkdir -p xp
+wget -O xp/xp.tar.gz {{ xp_url }}
+tar --strip-components=1 -xvvzf xp/xp.tar.gz -C xp/
+chmod u+x xp/xp.sh

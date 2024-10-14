@@ -1,7 +1,7 @@
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel
 import oai
-
+import yaml
 import oai.gen_oai
 
 class PosScriptData(BaseModel):
@@ -23,8 +23,14 @@ class PosScriptData(BaseModel):
             }
         }
 
+def to_yaml(data):
+    return yaml.safe_dump(data).strip()
+
+
 template_dir = 'templates'
 env = Environment(loader=FileSystemLoader(template_dir))
+env.filters.update({'to_yaml': to_yaml})
+
 
 def generate_script(data: PosScriptData, user: dict, id: str):
   template = env.get_template('deploy.sh.j2')  
@@ -44,6 +50,21 @@ def generate_dmi(data: PosScriptData, user: dict, id: str):
   dmi = template.render(dict(data) | user | {"id": id})
 
   return dmi
+
+def generate_params(data: PosScriptData, user: dict, id: str):
+  template = env.get_template('params.yaml.j2')
+
+  params = template.render(dict(data) | user | {"id": id})
+
+  return params
+
+def generate_params5g(data: PosScriptData, user: dict, id: str):
+  template = env.get_template('params.5g.yaml.j2')
+
+  params = template.render(dict(data) | user | {"id": id})
+
+  return params
+
 
 def generate_playbook_5g(data: PosScriptData, user: dict, id: str):
   template = env.get_template('5g.yaml.j2')

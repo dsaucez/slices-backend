@@ -127,6 +127,7 @@ def render(environment, templatepath, gcn):
   served_guami_list = servedGuamiList(gcn)
 
   content = template.render(
+      ues     = gcn['UEs'],
       mcc     = gcn['mcc'],
       mnc     = gcn['mnc'],
       tac     = gcn['tac'],

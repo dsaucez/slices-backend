@@ -2,6 +2,7 @@
 XP={{ name }}
 
 KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
+KUBECONFIG=~/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 
 DIR=$(dirname $(realpath "$0"))
 RESULTS_DIR=/srv/testbed/results/
@@ -10,16 +11,11 @@ rm -rf "$DIR/.venv"
 python3 -m venv "$DIR/.venv"
 source "$DIR/.venv/bin/activate"
 pip install -r requirements.txt
-pip install slices-cli --extra-index-url=https://doc.slices-ri.eu/pypi/
 
 slices project use {{ project }}
 TOKEN=$(slices auth id-token n5qsyXbYTeI89uVG3XLmYr2r)
 
 echo "token: $TOKEN" > pos/token
-# ansible-vault decrypt  --vault-pass-file password  $TOKEN_VAULT
-# sed -i "/^  token:/c\  token: ${TOKEN}" pos/secrets.yaml
-# ansible-vault encrypt  --vault-pass-file password  pos/secrets.yaml
-# chmod a+r pos/secrets.yaml
 
 # this exists due to a bug in ansible...
 export LC_ALL="C.UTF-8"
@@ -44,51 +40,28 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
 
 ## secret files
 $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
-# $POS nodes copy --dest .pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
-# $POS nodes copy --dest .pos/password $DEPLOY_NODE  pos/password
 
 # experiment files
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
-#$POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
-#$POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
-
-#$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/{{ k8s_user }}/config-{{ k8s_user }}
-#$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
+$POS nodes copy --dest pos/get_xp.sh $DEPLOY_NODE  pos/get_xp.sh
+$POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
+$POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
+$POS nodes copy --dest pos/params_dmi.yaml $DEPLOY_NODE  pos/params_dmi.yaml
 
 ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
-pos commands launch $DEPLOY_NODE wget {{ xp_url }}
-pos commands launch $DEPLOY_NODE wget {{ xp_url }}tar --strip-components=1 -xvvzf examples-simple_ping.tar.gz
-
-
 # Deploy the 5G network
-ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/token" --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
+# ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/token" --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
+# $POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
 
-# copy all necessary files
-# $POS nodes copy --dest reference_implementation/pos/secrets.yaml $DEPLOY_NODE  pos/secrets.yaml
-# $POS nodes copy --dest reference_implementation/pos/password $DEPLOY_NODE  pos/password
-$POS nodes copy --dest reference_implementation/pos/params.yaml $DEPLOY_NODE  pos/params.yaml
-$POS nodes copy --dest reference_implementation/pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
+# Get and run the experiment
+$POS commands launch $DEPLOY_NODE "pos/get_xp.sh" --verbose --name "get_xp.sh"
+$POS commands launch $DEPLOY_NODE "xp/xp.sh" --verbose --name "xp.sh"
 
-$POS nodes copy --dest reference_implementation/pos/xp.sh $DEPLOY_NODE  pos/xp.sh
-$POS nodes copy --dest reference_implementation/pos/xp.yaml $DEPLOY_NODE  pos/xp.yaml
 
-$POS nodes copy --dest clean.sh $DEPLOY_NODE  pos/clean.sh
 
-$POS nodes copy --dest /tmp/kubeconfig $DEPLOY_NODE RBAC/$USER/config-$USER
-$POS nodes copy -r --dest reference_implementation/pos/inventory $DEPLOY_NODE  pos/inventory
 
-# 1. Create the cluster
-###DD$POS commands launch $DEPLOY_NODE --infile "pos/cluster.sh" --verbose --name "cluster.sh"
 
-# 2. Prepare a control machine with k8s client
-$POS commands launch $DEPLOY_NODE --infile "pos/prepare.sh" --verbose --name "prepare.sh"
-
-# 3. Deploy 5G
-$POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
-
-# 4. Run the experiment
-$POS commands launch $DEPLOY_NODE --infile "pos/xp.sh" --verbose --name "xp.sh"
 
 # 5. Publish results
 ALLOC_ID=$( $POS allocations show $DEPLOY_NODE | jq -r .id )
@@ -102,7 +75,12 @@ echo $RESULTS_FOLDER
 
 tar -cvvzf dataset.tar.gz pos -C $RESULTS_FOLDER . 
 
+DMI_TOKEN=$(slices auth get-for-audience https://mrs-portal.slices-staging.slices-be.eu)
+echo "token: $DMI_TOKEN" > pos/dmi_token
+## secret files
+$POS nodes copy --dest .pos/dmi_token $DEPLOY_NODE  pos/dmi_token
+
 $POS nodes copy --recursive --dest mini-dmi $DEPLOY_NODE ~/mini-dmi
 $POS nodes copy --recursive --dest mini-dmi/storage-client-playground/ $DEPLOY_NODE dataset.tar.gz
 
-ansible-playbook -i pos/inventory --extra-vars "@pos/params.yaml" --extra-vars "@pos/params.dmi.yaml"  --extra-vars "artifact_size=${ARTIFACT_SIZE}" --extra-vars "@pos/secrets.yaml" --vault-password-file pos/password dmi.yaml
+ansible-playbook -i pos/hosts --extra-vars "@pos/params_dmi.yaml"  --extra-vars "artifact_size=${ARTIFACT_SIZE}" --extra-vars "@pos/dmi_token" dmi.yaml

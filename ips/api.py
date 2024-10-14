@@ -300,6 +300,12 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
     # generate the exectution script
     deploy = pos.generate_script(data=data, user=user, id=id)
 
+    # generate params parameters
+    params = pos.generate_params(data=data, user=user, id=id)
+    
+    # generate params 5g parameters
+    params5g = pos.generate_params5g(data=data, user=user, id=id)
+
     # generate dmi parameters
     dmi = pos.generate_dmi(data=data, user=user, id=id)
 
@@ -315,6 +321,8 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
 
         zip_file.writestr("pos/provision.yaml", playbook)
         zip_file.writestr("pos/5g.yaml", playbook_5g)
+        zip_file.writestr("pos/params.yaml", params)
+        zip_file.writestr("pos/params.5g.yaml", params5g)
         zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
 

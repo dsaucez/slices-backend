@@ -1,0 +1,11 @@
+---
+# docker configuration
+docker:
+  insecure_registries:
+    - 172.29.7.10:5001
+  registry_mirrors:
+    - http://172.29.7.10:5000
+
+# k8s configuration
+k8s:
+  runtime: docker
