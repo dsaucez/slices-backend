@@ -1,25 +1,36 @@
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel
+from typing import Optional
 import oai
 import yaml
 import oai.gen_oai
 
 class PosScriptData(BaseModel):
+    experiment_id: str
     name: str
     description: str
     deploy_node: str
     xp_url: str
     params_5g: dict
+    scientificDomains: Optional[list] = ['network']
+    scientificSubdomains: Optional[list] = ['5G']
+    version: Optional[str] = "v0.1"
+    license: Optional[str] = "BSD-3-Clause"
 
     class Config:
         # Example of content for documentation
         json_schema_extra = {
             "example": {
+              "experiment_id": "exp_expauth.ilabt.imec.be_abcdefghijklmnopqrstuvwxyz",
               "name": "name_of_the_xp",
               "description": "Nice description",
               "deploy_node": "sopnode-w3",
               "xp_url": "http://www.exmaple.org/xp.tar.gz",
-              "params_5g": {}
+              "params_5g": {},
+              "scientificDomains": ['network'],
+              "scientificSubdomains": ['5G'],
+              "version": "v0.1",
+              "license": "BSD-3-Clause"
             }
         }
 

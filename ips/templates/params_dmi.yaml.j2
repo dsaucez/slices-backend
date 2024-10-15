@@ -2,13 +2,11 @@ dmi:
   identifier: {{ id }}
   name: {{ name }}
   description: {{ description }}
-  version: "v0.1"
-  license: "BSD-3-Clause"
+  version: {{ version }}
+  license: {{ license }}
   creators:
   - firstName: "{{ first_name }}"
     lastName: "{{ last_name }}"
     email: "{{ email }}"
-  scientificDomains:
-    - network
-  scientificSubdomains:
-    - 5G
+  scientificDomains: {{ scientificDomains }}
+  scientificSubdomains: {{ scientificSubdomains }}

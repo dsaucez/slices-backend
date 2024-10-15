@@ -280,7 +280,7 @@ async def get_reset(user: dict = Depends(check_role(["admin"]))):
 @app.post("/pos/script/")
 async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
-    id="{}-{}-{}".format(user["proj_name"], data.name, uuid.uuid4())
+    id=data.experiment_id
 
     # deploy_node = data.deploy_node
     # url = data.xp_url
@@ -322,8 +322,6 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         zip_file.writestr("pos/5g.sh", sh_5g)
         zip_info = zip_file.getinfo("pos/5g.sh")
         zip_info.external_attr = 0o755 << 16
-        print ("ICI")
-
 
         zip_file.writestr("pos/provision.yaml", playbook)
         zip_file.writestr("pos/5g.yaml", playbook_5g)

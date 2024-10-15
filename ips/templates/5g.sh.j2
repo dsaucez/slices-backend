@@ -3,4 +3,4 @@ cd reference_implementation
 
 source .venv/bin/activate
 
-ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@~/pos/params.5g.yaml" --extra-vars "@~/.pos/token" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" pos/5g.yaml
+ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@~/pos/params.5g.yaml" --extra-vars "@~/.pos/token" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" ~/pos/5g.yaml
