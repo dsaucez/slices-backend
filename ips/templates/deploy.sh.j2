@@ -45,6 +45,7 @@ $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
 $POS nodes copy --dest pos/get_xp.sh $DEPLOY_NODE  pos/get_xp.sh
 $POS nodes copy --dest pos/5g.sh $DEPLOY_NODE  pos/5g.sh
+$POS nodes copy --dest pos/5g.yaml $DEPLOY_NODE  pos/5g.yaml
 $POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
 $POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 $POS nodes copy --dest pos/params_dmi.yaml $DEPLOY_NODE  pos/params_dmi.yaml
@@ -68,8 +69,8 @@ $POS commands launch $DEPLOY_NODE "xp/xp.sh" --verbose --name "xp.sh"
 ALLOC_ID=$( $POS allocations show $DEPLOY_NODE | jq -r .id )
 RESULTS_FOLDER=$RESULTS_DIR/$($POS allocations show $ALLOC_ID | jq -r .result_folder)
 
-RESULTS_SIZE=$(du -s $RESULTS_FOLDER | cut -f 1)
-POS_SIZE=$(du -s pos | cut -f 1)
+RESULTS_SIZE=$(du -bs $RESULTS_FOLDER | cut -f 1)
+POS_SIZE=$(du -bs pos | cut -f 1)
 ARTIFACT_SIZE=$(( $RESULTS_SIZE + $POS_SIZE ))
 echo $ARTIFACT_SIZE
 echo $RESULTS_FOLDER
