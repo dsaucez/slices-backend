@@ -11,59 +11,52 @@ def createFile(content, filename):
   with open(filename, mode="w", encoding="utf-8") as file:
     file.write(content)
 
-def genIPs(gcn, gip):
-  # net = ipaddr.IPNetwork(gcn['multus']['network'])
-  # base_ip = net.ip + 2
+import ipaddr
+
+def genIPs(gcn):
+  net = ipaddr.IPNetwork(gcn['multus']['network'])
+  base_ip = net.ip + 2
   hostInterface = gcn['multus']['hostInterface']
-
-  reserved = list()
-  for i in range(0, 18):
-    rip = gip(cluster_name="central_multus")
-    reserved.append(rip)
-
-  prefixlen = reserved[0]["prefixlen"]
-
-  lb_ip = gip(cluster_name="central_lb")
 
   ips = {
     "amf": {
-      "n2": {'ip': reserved[0]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "n2": {'ip': str(base_ip), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "smf": {
-      "n4": {'ip': reserved[1]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "n4": {'ip': str(base_ip + 1), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "upf": {
-      "n3": {'ip': reserved[2]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n4": {'ip': reserved[3]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n6": {'ip': reserved[4]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "n3": {'ip': str(base_ip + 2), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n4": {'ip': str(base_ip + 3), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n6": {'ip': str(base_ip + 4), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "gnb": {
-      "n2": {'ip': reserved[5]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': reserved[6]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 5), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 6), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
     },
     "du": {
-      "f1": {'ip': reserved[7]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "f1": {'ip': str(base_ip + 7), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     }, #
     "cu": {
-      "f1": {'ip': reserved[8]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n2": {'ip': reserved[9]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': reserved[10]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "f1": {'ip': str(base_ip + 8), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 9), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 10), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "cucp": {
-      "e1": {'ip': reserved[11]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n2": {'ip': reserved[12]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "f1": {'ip': reserved[8]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "e1": {'ip': str(base_ip + 11), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 12), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "f1": {'ip': str(base_ip + 8), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "cuup": {
-      "e1": {'ip': reserved[14]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': reserved[15]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface},
-      "f1": {'ip': reserved[16]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface}
+      "e1": {'ip': str(base_ip + 14), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 15), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "f1": {'ip': str(base_ip + 16), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
     },
     "trafficserver": {
-      'ip': reserved[17]['ip'], 'prefixlen': prefixlen, 'hostInterface': hostInterface
+      'ip': str(base_ip + 17), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface
     },
     "nrf": {
-      "loadBalancerIP": lb_ip #gcn['core']['nrfLoadBalancerIP']
+      "loadBalancerIP": gcn['core']['nrfLoadBalancerIP']
     },
   }
   return ips
@@ -145,7 +138,7 @@ def render(environment, templatepath, gcn):
 
 import zipfile
 
-def build(data: dict, gip, zip_buffer):
+def build(data: dict, zip_buffer):
   # ==============================================================================
   # load configurations
   #manifest = os.environ['manifest']
@@ -166,7 +159,7 @@ def build(data: dict, gip, zip_buffer):
 
   if 'multus' in gcn:
     if "ips" not in gcn['multus']:
-      gcn['multus']['ips'] = genIPs(gcn, gip)
+      gcn['multus']['ips'] = genIPs(gcn)
 
 
   # Render files

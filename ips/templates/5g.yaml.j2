@@ -1,5 +1,6 @@
 - name: Deploy Core, RAN, and UE
-  hosts: all
+  hosts: localhost
+  connection: local
 
   roles:
   - role: 5g/base

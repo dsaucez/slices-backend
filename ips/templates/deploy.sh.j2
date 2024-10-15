@@ -44,15 +44,16 @@ $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
 # experiment files
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
 $POS nodes copy --dest pos/get_xp.sh $DEPLOY_NODE  pos/get_xp.sh
+$POS nodes copy --dest pos/5g.sh $DEPLOY_NODE  pos/5g.sh
 $POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
 $POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 $POS nodes copy --dest pos/params_dmi.yaml $DEPLOY_NODE  pos/params_dmi.yaml
+$POS nodes copy --recursive --dest pos/oai-cn5g-fed-custom $DEPLOY_NODE  oai-cn5g-fed 
 
 ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
 # Deploy the 5G network
-# ANSIBLE_ROLES_PATH=roles ansible-playbook -i pos/hosts --extra-vars "@pos/token" --extra-vars "_kube_config_local_path=$K8S_CONFIGS/config-user1" --extra-vars "ansible_ssh_private_key_file=~/.ssh/id_rsa" --extra-vars "@pos/params.5g.yaml" 5g.pos.yaml
-# $POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
+$POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
 
 # Get and run the experiment
 $POS commands launch $DEPLOY_NODE "pos/get_xp.sh" --verbose --name "get_xp.sh"

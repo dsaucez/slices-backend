@@ -65,19 +65,19 @@ def run_ssh_command_with_key(hostname, port, username, key_path, command):
         # Close the SSH connection
         ssh.close()
 
-def remove_expired():
-    for k, v in db["ips"].items():
-        ips  = v["reserved_ips"]
+# def remove_expired():
+#     for k, v in db["ips"].items():
+#         ips  = v["reserved_ips"]
 
-        # get all expired IPs
-        expired = []
-        for ip, infos in ips.items():
-            if datetime.now(timezone.utc) > infos["expiration"]:
-                expired.append(ip)
+#         # get all expired IPs
+#         expired = []
+#         for ip, infos in ips.items():
+#             if datetime.now(timezone.utc) > infos["expiration"]:
+#                 expired.append(ip)
 
-        # purge the expired IPs
-        for ip in expired:
-            del ips[ip]
+#         # purge the expired IPs
+#         for ip in expired:
+#             del ips[ip]
 
 def check_role(allowed_roles: List[str]):
     """
@@ -169,106 +169,106 @@ def expiration_time(delta=60):
 
     return later
 
-@app.delete("/ip/{cluster}/{ipaddress}")
-async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict = Depends(check_role(["admin"]))):
-    """
-    Delete a reserved IP address from a specified cluster.
+# @app.delete("/ip/{cluster}/{ipaddress}")
+# async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict = Depends(check_role(["admin"]))):
+#     """
+#     Delete a reserved IP address from a specified cluster.
 
-    This endpoint removes the specified IP address from the reserved IPs 
-    of the given cluster. If the IP address does not exist in the 
-    reserved list, a 404 error is returned.
+#     This endpoint removes the specified IP address from the reserved IPs 
+#     of the given cluster. If the IP address does not exist in the 
+#     reserved list, a 404 error is returned.
 
-    Args:
-        cluster (ClusterNames): The name of the cluster from which the 
-        IP address is to be removed. Should match one of the defined 
-        cluster names.
+#     Args:
+#         cluster (ClusterNames): The name of the cluster from which the 
+#         IP address is to be removed. Should match one of the defined 
+#         cluster names.
         
-        ipaddress (IPvAnyAddress): The IP address to be removed. 
-        Must be a valid IPv4 or IPv6 address.
+#         ipaddress (IPvAnyAddress): The IP address to be removed. 
+#         Must be a valid IPv4 or IPv6 address.
 
-    Raises:
-        HTTPException: If the IP address is not found in the reserved 
-        IPs of the specified cluster, a 404 error is raised with 
-        details about the failure.
+#     Raises:
+#         HTTPException: If the IP address is not found in the reserved 
+#         IPs of the specified cluster, a 404 error is raised with 
+#         details about the failure.
 
-    Returns:
-        Dict[str, str]: A dictionary containing the removed IP address 
-        along with the associated cluster name.
+#     Returns:
+#         Dict[str, str]: A dictionary containing the removed IP address 
+#         along with the associated cluster name.
 
-    Example:
-        DELETE /ip/my_cluster/192.168.1.10
-        Response:
-        {
-            "msg": "192.168.1.10 has been removed from cluster my_cluster",
-            "cluster": "my_cluster"
-        }
+#     Example:
+#         DELETE /ip/my_cluster/192.168.1.10
+#         Response:
+#         {
+#             "msg": "192.168.1.10 has been removed from cluster my_cluster",
+#             "cluster": "my_cluster"
+#         }
 
-        DELETE /ip/my_cluster/192.168.1.99
-        Response:
-        {
-            "msg": "Address not found",
-            "cluster": "my_cluster",
-            "ip": "192.168.1.99"
-        }
-    """
-    db_cluster = db["ips"][cluster.name]
-    reserved_ips = db_cluster["reserved_ips"]
-    try:
-        res = reserved_ips.pop(str(ipaddress))
-    except KeyError:
-        raise HTTPException(status_code=404, detail={"msg": "Address not found", "cluster": cluster.name, "ip": str(ipaddress)})
-    return res | {'cluster': cluster}
+#         DELETE /ip/my_cluster/192.168.1.99
+#         Response:
+#         {
+#             "msg": "Address not found",
+#             "cluster": "my_cluster",
+#             "ip": "192.168.1.99"
+#         }
+#     """
+#     db_cluster = db["ips"][cluster.name]
+#     reserved_ips = db_cluster["reserved_ips"]
+#     try:
+#         res = reserved_ips.pop(str(ipaddress))
+#     except KeyError:
+#         raise HTTPException(status_code=404, detail={"msg": "Address not found", "cluster": cluster.name, "ip": str(ipaddress)})
+#     return res | {'cluster': cluster}
 
-@app.get("/ip/{cluster}")
-async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]))):
-    """
-    Reserve an IP address from a pool for a given cluster.
+# @app.get("/ip/{cluster}")
+# async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]))):
+#     """
+#     Reserve an IP address from a pool for a given cluster.
 
-    The reserved IP address and its expiration time are returned in the response.
+#     The reserved IP address and its expiration time are returned in the response.
 
-    Args:
-        cluster (ClusterNames): The name of the cluster from which to reserve an IP.
+#     Args:
+#         cluster (ClusterNames): The name of the cluster from which to reserve an IP.
 
-    Returns:
-        dict: A dictionary containing the reserved IP address, its prefix length,
-        its expiration time, and the associated cluster name.
+#     Returns:
+#         dict: A dictionary containing the reserved IP address, its prefix length,
+#         its expiration time, and the associated cluster name.
 
-    Raises:
-        HTTPException: If no available IP address can be reserved from the pool, 
-        a 404 error is raised.
-    """
-    cluster_name = cluster.name
+#     Raises:
+#         HTTPException: If no available IP address can be reserved from the pool, 
+#         a 404 error is raised.
+#     """
+#     cluster_name = cluster.name
 
-    try:
-        res = get_ip_in_cluster(cluster_name)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))    
+#     try:
+#         res = get_ip_in_cluster(cluster_name)
+#     except ValueError as e:
+#         raise HTTPException(status_code=404, detail=str(e))    
 
-    return res
+#     return res
 
-def get_ip_in_cluster(cluster_name):
-    db_cluster = db["ips"][cluster_name]
-    reserved_ips = db_cluster["reserved_ips"]
+# def _get_ip_in_cluster(cluster_name):
+#     db_cluster = db["ips"][cluster_name]
+#     reserved_ips = db_cluster["reserved_ips"]
 
-    pool = iplib.generate_ip_pool(db_cluster['prefix'])
-    prefix = IPv4Network(db_cluster['prefix'])
+#     pool = iplib.generate_ip_pool(db_cluster['prefix'])
+#     prefix = IPv4Network(db_cluster['prefix'])
 
-    for ip, infos in reserved_ips.items():
-        pool.discard(infos["ip"])
+#     for ip, infos in reserved_ips.items():
+#         pool.discard(infos["ip"])
 
-    reserved_ip = iplib.pick_and_remove_ip(pool)
+#     reserved_ip = iplib.pick_and_remove_ip(pool)
     
-    entry= {
-        "ip": reserved_ip,
-        "prefixlen": prefix.prefixlen,
-        "expiration": expiration_time(delta=3600)
-        }
-    db_cluster['reserved_ips'][str(reserved_ip)] = entry
+#     entry= {
+#         "ip": reserved_ip,
+#         "prefixlen": prefix.prefixlen,
+#         "expiration": expiration_time(delta=3600)
+#         }
+#     db_cluster['reserved_ips'][str(reserved_ip)] = entry
     
-    return entry | {"cluster": cluster_name}
+#     return entry | {"cluster": cluster_name}
 
 @app.get("/db/")
-async def get_db(user: dict = Depends(check_role(["admin", "user"]))):
+async def get_db(user: dict = Depends(check_role(["admin"]))):
     return {"db": db}
 
 @app.get("/reset/")
@@ -281,9 +281,6 @@ async def get_reset(user: dict = Depends(check_role(["admin"]))):
 async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
     id="{}-{}-{}".format(user["proj_name"], data.name, uuid.uuid4())
-
-    # cleanup IP space
-    remove_expired()
 
     # deploy_node = data.deploy_node
     # url = data.xp_url
@@ -299,6 +296,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
 
     # generate the exectution script
     deploy = pos.generate_script(data=data, user=user, id=id)
+
+    sh_5g = pos.generate_sh5g(data=data, user=user, id=id)
+
 
     # generate params parameters
     params = pos.generate_params(data=data, user=user, id=id)
@@ -319,6 +319,12 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         zip_info = zip_file.getinfo("pos/deploy.sh")
         zip_info.external_attr = 0o755 << 16
 
+        zip_file.writestr("pos/5g.sh", sh_5g)
+        zip_info = zip_file.getinfo("pos/5g.sh")
+        zip_info.external_attr = 0o755 << 16
+        print ("ICI")
+
+
         zip_file.writestr("pos/provision.yaml", playbook)
         zip_file.writestr("pos/5g.yaml", playbook_5g)
         zip_file.writestr("pos/params.yaml", params)
@@ -331,7 +337,7 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         zip_info.external_attr = 0o755 << 16
 
     try:
-        pos.generate_oai(data=data, user=user, id=id, gip=get_ip_in_cluster, zip_buffer=zip_buffer)
+        pos.generate_oai(data=data, user=user, id=id, zip_buffer=zip_buffer)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

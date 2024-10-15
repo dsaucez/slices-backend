@@ -38,6 +38,12 @@ def generate_script(data: PosScriptData, user: dict, id: str):
   
   return script
 
+def generate_sh5g(data: PosScriptData, user: dict, id: str):
+  template = env.get_template('5g.sh.j2')  
+  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] })
+  
+  return script
+
 def generate_inventory(data: PosScriptData, user: dict, id: str):
   template = env.get_template('hosts.yaml.j2')
   inventory = template.render(data)
@@ -78,8 +84,8 @@ def generate_playbook(data: PosScriptData, user: dict, id: str):
 
   return playbook
 
-def generate_oai(data: PosScriptData, user: dict, id: str, gip, zip_buffer):
-   oai.gen_oai.build(data = dict(data), gip=gip, zip_buffer=zip_buffer)
+def generate_oai(data: PosScriptData, user: dict, id: str, zip_buffer):
+   oai.gen_oai.build(data = dict(data), zip_buffer=zip_buffer)
    return {}
 
 
