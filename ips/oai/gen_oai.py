@@ -115,6 +115,7 @@ def render(environment, templatepath, gcn):
   slices = gcn['slices']
   dnns    = gcn['dnns']
   ues = gcn.get('UEs', [])
+  ran = gcn['RAN']
 
   smf_info = smfInfo(gcn)
   plmn_support_list = plmnSupportList(gcn)
@@ -131,7 +132,8 @@ def render(environment, templatepath, gcn):
       plmn_support_list = plmn_support_list,
       served_guami_list = served_guami_list,
       network = gcn['multus'],
-      core = gcn
+      core = gcn,
+      ran = ran
   )
 
   return content
@@ -151,7 +153,9 @@ def build(data: dict, zip_buffer):
 
   core = data['params_5g']
   # core = yaml.safe_load(os.environ['params_5g'])
+  
   gcn = core['GCN']
+  print (gcn)
 
   # Prepare rendering environment
   environment = Environment(loader=FileSystemLoader(templates_dir))

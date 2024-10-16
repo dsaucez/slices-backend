@@ -6,6 +6,10 @@ metadata:
 #https://gitlab.eurecom.fr/oai/openairinterface5g/-/blob/develop/ci-scripts/conf_files/gNB_SA_DU.conf
 data:
   du.conf: |
+{%- endraw %}
+    {%if ran.gnbconf is defined -%}{% filter indent(width=4) %}{{ ran.gnbconf }}{%- endfilter %}
+{% else %}
+{% raw %}
       Active_gNBs = ( "{{ .Values.config.duName}}");
       # Asn1_verbosity, choice in: none, info, annoying
       Asn1_verbosity = "none";
@@ -14,9 +18,8 @@ data:
       (
        {
           ////////// Identification parameters:
-          gNB_ID = 0xe00;
-          gNB_DU_ID = 0xe00;
-
+          gNB_ID = {{ .Values.config.gnbId }}; 
+          gNB_DU_ID = {{ .Values.config.gnbDuId }}; 
       #     cell_type =  "CELL_MACRO_GNB";
 
           gNB_name  =  "{{ .Values.config.duName}}";
@@ -241,3 +244,4 @@ data:
       };
 
 {% endraw %}
+{% endif -%}

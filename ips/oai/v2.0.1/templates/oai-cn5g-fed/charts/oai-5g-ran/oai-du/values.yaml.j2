@@ -60,6 +60,8 @@ config:
   timeZone: "Europe/Paris"
   useAdditionalOptions: "--sa --rfsim --log_config.global_log_options level,nocolor,time"
   duName: "oai-du-rfsim"
+  gnbId: "{{ core.RAN.gnbid | default('0xe00') }}"
+  gnbDuId: "{{ core.RAN.gnbduid | default('0xe00') }}"
   mcc: "{{ core.mcc }}"   # check the information with AMF, SMF, UPF
   mnc: "{{ core.mnc }}"    # check the information with AMF, SMF, UPF
   tac: "{{ core.tac}}"     # check the information with AMF
