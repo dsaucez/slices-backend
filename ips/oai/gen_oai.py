@@ -154,8 +154,8 @@ def build(data: dict, zip_buffer):
   core = data['params_5g']
   # core = yaml.safe_load(os.environ['params_5g'])
   
+  print(core)
   gcn = core['GCN']
-  print (gcn)
 
   # Prepare rendering environment
   environment = Environment(loader=FileSystemLoader(templates_dir))

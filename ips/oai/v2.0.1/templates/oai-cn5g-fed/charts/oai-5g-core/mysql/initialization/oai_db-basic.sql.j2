@@ -392,7 +392,8 @@ COMMIT;
 --        15,\"preemptCap\":
 --        \"NOT_PREEMPT\",\"preemptVuln\":\"PREEMPTABLE\"},\"priorityLevel\":1},\"sessionAmbr\":{\"uplink\":\"1000Mbps\",
 --        \"downlink\":\"1000Mbps\"}}}'
-{% for ue in UEs %}
+
+{% for ue in ues %}
 INSERT INTO `AuthenticationSubscription`
 (
   `ueid`,
