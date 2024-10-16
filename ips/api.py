@@ -432,4 +432,49 @@ async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict
     return {"output": output}
 
 
+@app.get("/prefix/")
+async def get_prefix(user: dict = Depends(check_role(["admin", "user"]))):
+    proj = user['proj']
 
+    if proj not in db['cluster']['allocated'].keys():
+        try:
+            p = db['cluster']['subnets'].pop()
+            db['cluster']['allocated'][proj] = p
+        except IndexError:
+            raise HTTPException(status_code=404, detail="No prefix is available")
+
+        try:
+            lb = db['metallb']['ips'].pop()
+            db['metallb']['allocated'][proj] = lb
+        except IndexError:
+            raise HTTPException(status_code=404, detail="No LB IP is available")    
+        
+
+    else:
+        p = db['cluster']['allocated'][proj]
+        lb = db['metallb']['allocated'][proj]
+
+    return {
+        "subnet": p,
+        "lb": lb
+        }
+
+@app.delete("/prefix/")
+async def get_prefix(user: dict = Depends(check_role(["admin", "user"]))):
+    proj = user['proj']
+
+    if proj not in db['cluster']['allocated'].keys():
+        raise HTTPException(status_code=404, detail="No prefix is allocated to your project")
+    
+    p = db['cluster']['allocated'][proj]
+    db['cluster']['subnets'].append(p)
+
+    lb = db['metallb']['allocated'][proj]
+    db['metallb']['ips'].append(lb)
+
+    del db['cluster']['allocated'][proj]
+    del db['metallb']['allocated'][proj]
+
+    return {"subnet": p,
+            "lb": lb
+            }

@@ -13,6 +13,15 @@ get_experiment_id(){
   echo $experiment_id
 }
 
+# Function to get floating IPs for a project
+get_prefix() {
+  local project_id="$1"
+  local experiment_name="$2"
+  
+  TOKEN="$(slices auth id-token pos)"
+  curl -s -X GET "http://172.29.7.10:8000/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}" --output ${experiment_id}.zip
+}
+
 # Function to fetch experiment details
 get_experiment() {
   local project_id="$1"
@@ -79,6 +88,9 @@ case "$command" in
     ;;
   launch)
     launch_experiment "$project_id"  "$experiment_name"
+    ;;
+  prefix)
+    get_prefix "$project_id"  "$experiment_name"
     ;;
   *)
     echo "Error: Invalid command '$command'."
