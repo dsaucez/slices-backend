@@ -2,7 +2,7 @@ from enum import Enum
 from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
 from pydantic import IPvAnyAddress, BaseModel, Field, field_validator
-
+import traceback
 from datetime import datetime, timedelta, timezone
 import ip as iplib
 from ipaddr import IPAddress, IPv4Network
@@ -338,6 +338,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
         pos.generate_oai(data=data, user=user, id=id, zip_buffer=zip_buffer)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except Exception as err:
+        full_traceback = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=str(full_traceback))
 
     zip_buffer.seek(0)
 
