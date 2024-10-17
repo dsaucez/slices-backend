@@ -2,8 +2,21 @@
 
 # Function to display usage information
 usage() {
-  echo "Usage: $0 experiment [get|launch] <experiment_name>"
+  echo "Usage: $0 experiment [get|launch|prefix] <experiment_name>"
+  echo "       $0 nodes [start|stop] <node_name>"
   exit 1
+}
+
+start_node(){
+  local node="$1"
+
+  TOKEN="$(slices auth id-token pos)"
+  curl -s -X PATCH "http://172.29.7.10:8000/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+}
+
+stop_node(){
+  local node="$1"
+  echo "stop node $node"
 }
 
 get_experiment_id(){
@@ -64,36 +77,105 @@ launch_experiment() {
   pos/deploy.sh
 }
 
+
+
+
+#########
 # Check that the correct number of arguments are passed
 if [ "$#" -lt 3 ]; then
   echo "Error: Insufficient arguments."
   usage
 fi
 
-# Check that the first argument is "experiment"
-if [ "$1" != "experiment" ]; then
-  echo "Error: The first argument must be 'experiment'."
+# Assign the first and second arguments
+type="$1"
+command="$2"
+
+# Handle "experiment" related commands
+if [ "$type" == "experiment" ]; then
+  if [ "$#" -lt 3 ]; then
+    echo "Error: Insufficient arguments for experiment."
+    usage
+  fi
+
+  experiment_name="$3"
+  project_id=$(slices project show -f json | jq .name | tr -d \")
+
+  case "$command" in
+    get)
+      get_experiment "$project_id" "$experiment_name"
+      ;;
+    launch)
+      launch_experiment "$project_id" "$experiment_name"
+      ;;
+    prefix)
+      get_prefix "$project_id" "$experiment_name"
+      ;;
+    *)
+      echo "Error: Invalid command '$command'."
+      usage
+      ;;
+  esac
+
+# Handle "nodes" related commands
+elif [ "$type" == "nodes" ]; then
+  if [ "$#" -lt 3 ]; then
+    echo "Error: Insufficient arguments for nodes."
+    usage
+  fi
+
+  node_name="$3"
+
+  case "$command" in
+    start)
+      start_node "$node_name"
+      ;;
+    stop)
+      stop_node "$node_name"
+      ;;
+    *)
+      echo "Error: Invalid command '$command'."
+      usage
+      ;;
+  esac
+
+else
+  echo "Error: Invalid type '$type'."
   usage
 fi
 
-# Assign the second argument to a command and the third to experiment_name
-command="$2"
-experiment_name="$3"
-project_id=$(slices project  show -f json | jq .name | tr -d \")
 
-# Handle the "get" or "launch" commands with functions
-case "$command" in
-  get)
-    get_experiment "$project_id" "$experiment_name"
-    ;;
-  launch)
-    launch_experiment "$project_id"  "$experiment_name"
-    ;;
-  prefix)
-    get_prefix "$project_id"  "$experiment_name"
-    ;;
-  *)
-    echo "Error: Invalid command '$command'."
-    usage
-    ;;
-esac
+
+# # Check that the correct number of arguments are passed
+# if [ "$#" -lt 3 ]; then
+#   echo "Error: Insufficient arguments."
+#   usage
+# fi
+
+# # Check that the first argument is "experiment"
+# if [ "$1" != "experiment" ]; then
+#   echo "Error: The first argument must be 'experiment'."
+#   usage
+# fi
+
+# # Assign the second argument to a command and the third to experiment_name
+# command="$2"
+# experiment_name="$3"
+# project_id=$(slices project  show -f json | jq .name | tr -d \")
+
+# # Handle the "get" or "launch" commands with functions
+# case "$command" in
+#   get)
+#     get_experiment "$project_id" "$experiment_name"
+#     ;;
+#   launch)
+#     launch_experiment "$project_id"  "$experiment_name"
+#     ;;
+#   prefix)
+#     get_prefix "$project_id"  "$experiment_name"
+#     ;;
+#   *)
+#     echo "Error: Invalid command '$command'."
+#     usage
+#     ;;
+# esac

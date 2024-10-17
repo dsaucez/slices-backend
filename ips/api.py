@@ -21,6 +21,19 @@ import os
 
 import pos
 
+# ===== CORS 
+from fastapi.middleware.cors import CORSMiddleware
+origins = [
+    "http://mini-dmi.slices-staging.slices-be.eu",
+    "https://mini-dmi.slices-staging.slices-be.eu",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://localhost",
+    "https://localhost",
+    "http://172.29.7.10:8000",
+    "https://172.29.7.10:8000",
+]
+
 # == API KEY ===================================================================
 import jwt
 api_key_header = APIKeyHeader(name="Bearer")
@@ -148,6 +161,13 @@ db = load_db()
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
 app = FastAPI(dependencies=[Depends(validate_token)])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def expiration_time(delta=60):
     """
