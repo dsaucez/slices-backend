@@ -33,7 +33,9 @@ origins = [
     "http://172.29.7.10:8000",
     "https://172.29.7.10:8000",
     'http://post-5g-web.slices-ri.eu',
-    'https://post-5g-web.slices-ri.eu'
+    'https://post-5g-web.slices-ri.eu',
+    'http://duckburg.net.cit.tum.de',
+    'https://duckburg.net.cit.tum.de'
 ]
 
 # == API KEY ===================================================================

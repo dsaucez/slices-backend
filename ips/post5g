@@ -12,11 +12,31 @@ start_node(){
 
   TOKEN="$(slices auth id-token pos)"
   curl -s -X PATCH "http://172.29.7.10:8000/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+
+  curl -X 'PATCH' \
+  "http://172.29.7.10:8000/r2lab/$node/" \
+  -H 'accept: application/json' \
+  -H "Bearer: ${TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "state": "ON"
+  }'
 }
 
 stop_node(){
   local node="$1"
-  echo "stop node $node"
+
+  TOKEN="$(slices auth id-token pos)"
+  curl -s -X PATCH "http://172.29.7.10:8000/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+
+  curl -X 'PATCH' \
+  "http://172.29.7.10:8000/r2lab/$node/" \
+  -H 'accept: application/json' \
+  -H "Bearer: ${TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "state": "OFF"
+  }'
 }
 
 get_experiment_id(){
