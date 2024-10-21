@@ -306,8 +306,16 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
     # Generate an ID
     id=data.experiment_id
 
-    # deploy_node = data.deploy_node
-    # url = data.xp_url
+    # Prefix the namespaces to belong to the user
+    nsprefix=user['preferred_username']
+    if "namespace" in data.params_5g['GCN']['core']:
+        data.params_5g['GCN']['core']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['core']['namespace'])
+
+    if "namespace" in data.params_5g['GCN']['RAN']:
+        data.params_5g['GCN']['RAN']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['RAN']['namespace'])
+
+    if "namespace" in data.params_5g['GCN']['UE']:
+        data.params_5g['GCN']['UE']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['UE']['namespace'])
 
     # generate the inventory
     inventory = pos.generate_inventory(data=data, user=user, id=id)

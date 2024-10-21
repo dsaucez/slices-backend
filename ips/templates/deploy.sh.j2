@@ -60,11 +60,6 @@ $POS commands launch $DEPLOY_NODE --infile "pos/5g.sh" --verbose --name "5g.sh"
 $POS commands launch $DEPLOY_NODE "pos/get_xp.sh" --verbose --name "get_xp.sh"
 $POS commands launch $DEPLOY_NODE "xp/xp.sh" --verbose --name "xp.sh"
 
-
-
-
-
-
 # 5. Publish results
 ALLOC_ID=$( $POS allocations show $DEPLOY_NODE | jq -r .id )
 RESULTS_FOLDER=$RESULTS_DIR/$($POS allocations show $ALLOC_ID | jq -r .result_folder)
