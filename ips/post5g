@@ -11,10 +11,10 @@ start_node(){
   local node="$1"
 
   TOKEN="$(slices auth id-token pos)"
-  curl -s -X PATCH "http://172.29.7.10:8000/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+  curl -s -X PATCH "https://post5g-backend.slices-be.eu/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
 
   curl -X 'PATCH' \
-  "http://172.29.7.10:8000/r2lab/$node/" \
+  "https://post5g-backend.slices-be.eu/r2lab/$node/" \
   -H 'accept: application/json' \
   -H "Bearer: ${TOKEN}" \
   -H 'Content-Type: application/json' \
@@ -27,10 +27,10 @@ stop_node(){
   local node="$1"
 
   TOKEN="$(slices auth id-token pos)"
-  curl -s -X PATCH "http://172.29.7.10:8000/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+  curl -s -X PATCH "https://post5g-backend.slices-be.eu/r2lab/$node"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
 
   curl -X 'PATCH' \
-  "http://172.29.7.10:8000/r2lab/$node/" \
+  "https://post5g-backend.slices-be.eu/r2lab/$node/" \
   -H 'accept: application/json' \
   -H "Bearer: ${TOKEN}" \
   -H 'Content-Type: application/json' \
@@ -52,7 +52,7 @@ get_prefix() {
   local experiment_name="$2"
 
   TOKEN="$(slices auth id-token pos)"
-  curl -s -X GET "http://172.29.7.10:8000/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+  curl -s -X GET "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
 }
 
 # Function to fetch experiment details
@@ -76,7 +76,7 @@ get_experiment() {
 
 
   TOKEN="$(slices auth id-token pos)"
-  curl -s -X GET "http://172.29.7.10:8000/pos/script/${experiment_id}"   -H 'accept: application/json' -H "Bearer: ${TOKEN}" --output ${experiment_id}.zip
+  curl -s -X GET "https://post5g-backend.slices-be.eu/pos/script/${experiment_id}"   -H 'accept: application/json' -H "Bearer: ${TOKEN}" --output ${experiment_id}.zip
   unzip -qq -o -d reference_implementation-develop/ ${experiment_id}.zip
   chmod a+r -R reference_implementation-develop/
 

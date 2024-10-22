@@ -30,12 +30,12 @@ origins = [
     "https://localhost:8000",
     "http://localhost",
     "https://localhost",
-    "http://172.29.7.10:8000",
-    "https://172.29.7.10:8000",
     'http://post-5g-web.slices-ri.eu',
     'https://post-5g-web.slices-ri.eu',
     'http://duckburg.net.cit.tum.de',
-    'https://duckburg.net.cit.tum.de'
+    'https://duckburg.net.cit.tum.de',
+    'http://post5g-backend.slices-be.eu'
+    'https://post5g-backend.slices-be.eu'
 ]
 
 # == API KEY ===================================================================
@@ -81,20 +81,6 @@ def run_ssh_command_with_key(hostname, port, username, key_path, command):
     finally:
         # Close the SSH connection
         ssh.close()
-
-# def remove_expired():
-#     for k, v in db["ips"].items():
-#         ips  = v["reserved_ips"]
-
-#         # get all expired IPs
-#         expired = []
-#         for ip, infos in ips.items():
-#             if datetime.now(timezone.utc) > infos["expiration"]:
-#                 expired.append(ip)
-
-#         # purge the expired IPs
-#         for ip in expired:
-#             del ips[ip]
 
 def check_role(allowed_roles: List[str]):
     """
@@ -193,129 +179,60 @@ def expiration_time(delta=60):
 
     return later
 
-# @app.delete("/ip/{cluster}/{ipaddress}")
-# async def delete_ip(cluster: ClusterNames, ipaddress: IPvAnyAddress, user: dict = Depends(check_role(["admin"]))):
-#     """
-#     Delete a reserved IP address from a specified cluster.
-
-#     This endpoint removes the specified IP address from the reserved IPs 
-#     of the given cluster. If the IP address does not exist in the 
-#     reserved list, a 404 error is returned.
-
-#     Args:
-#         cluster (ClusterNames): The name of the cluster from which the 
-#         IP address is to be removed. Should match one of the defined 
-#         cluster names.
-        
-#         ipaddress (IPvAnyAddress): The IP address to be removed. 
-#         Must be a valid IPv4 or IPv6 address.
-
-#     Raises:
-#         HTTPException: If the IP address is not found in the reserved 
-#         IPs of the specified cluster, a 404 error is raised with 
-#         details about the failure.
-
-#     Returns:
-#         Dict[str, str]: A dictionary containing the removed IP address 
-#         along with the associated cluster name.
-
-#     Example:
-#         DELETE /ip/my_cluster/192.168.1.10
-#         Response:
-#         {
-#             "msg": "192.168.1.10 has been removed from cluster my_cluster",
-#             "cluster": "my_cluster"
-#         }
-
-#         DELETE /ip/my_cluster/192.168.1.99
-#         Response:
-#         {
-#             "msg": "Address not found",
-#             "cluster": "my_cluster",
-#             "ip": "192.168.1.99"
-#         }
-#     """
-#     db_cluster = db["ips"][cluster.name]
-#     reserved_ips = db_cluster["reserved_ips"]
-#     try:
-#         res = reserved_ips.pop(str(ipaddress))
-#     except KeyError:
-#         raise HTTPException(status_code=404, detail={"msg": "Address not found", "cluster": cluster.name, "ip": str(ipaddress)})
-#     return res | {'cluster': cluster}
-
-# @app.get("/ip/{cluster}")
-# async def get_ip(cluster: ClusterNames, user: dict = Depends(check_role(["user"]))):
-#     """
-#     Reserve an IP address from a pool for a given cluster.
-
-#     The reserved IP address and its expiration time are returned in the response.
-
-#     Args:
-#         cluster (ClusterNames): The name of the cluster from which to reserve an IP.
-
-#     Returns:
-#         dict: A dictionary containing the reserved IP address, its prefix length,
-#         its expiration time, and the associated cluster name.
-
-#     Raises:
-#         HTTPException: If no available IP address can be reserved from the pool, 
-#         a 404 error is raised.
-#     """
-#     cluster_name = cluster.name
-
-#     try:
-#         res = get_ip_in_cluster(cluster_name)
-#     except ValueError as e:
-#         raise HTTPException(status_code=404, detail=str(e))    
-
-#     return res
-
-# def _get_ip_in_cluster(cluster_name):
-#     db_cluster = db["ips"][cluster_name]
-#     reserved_ips = db_cluster["reserved_ips"]
-
-#     pool = iplib.generate_ip_pool(db_cluster['prefix'])
-#     prefix = IPv4Network(db_cluster['prefix'])
-
-#     for ip, infos in reserved_ips.items():
-#         pool.discard(infos["ip"])
-
-#     reserved_ip = iplib.pick_and_remove_ip(pool)
-    
-#     entry= {
-#         "ip": reserved_ip,
-#         "prefixlen": prefix.prefixlen,
-#         "expiration": expiration_time(delta=3600)
-#         }
-#     db_cluster['reserved_ips'][str(reserved_ip)] = entry
-    
-#     return entry | {"cluster": cluster_name}
-
 @app.get("/db/")
 async def get_db(user: dict = Depends(check_role(["admin"]))):
+    """
+    GET /db/ endpoint to retrieve the database object. Only accessible to users with the "admin" role.
+
+    Parameters:
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing all database entries.
+
+    Raises:
+    HTTPException: If the user does not have the "admin" role, an HTTPException with a 403 status code
+                   will be raised to deny access.
+    """
     return {"db": db}
 
 @app.get("/reset/")
 async def get_reset(user: dict = Depends(check_role(["admin"]))):
+    """
+    GET /reset/ endpoint to reset the database by reloading it. Only accessible to users with the "admin" role.
+
+    This function resets the database.
+
+    Parameters:
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing the reloaded database.
+
+    Raises:
+    HTTPException: If the user does not have the "admin" role, an HTTPException with a 403 status code
+                   will be raised to deny access.
+    """
     global db
     db = load_db()
     return {"db": db}
 
 @app.post("/pos/script/")
-async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
+async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate_token)):
+# async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
     id=data.experiment_id
 
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
-        data.params_5g['GCN']['core']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['core']['namespace'])
+        data.params_5g['GCN']['core']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['core']['namespace'])
 
     if "namespace" in data.params_5g['GCN']['RAN']:
-        data.params_5g['GCN']['RAN']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['RAN']['namespace'])
+        data.params_5g['GCN']['RAN']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['RAN']['namespace'])
 
     if "namespace" in data.params_5g['GCN']['UE']:
-        data.params_5g['GCN']['UE']['namespace'] = "{}_{}".format(nsprefix, data.params_5g['GCN']['UE']['namespace'])
+        data.params_5g['GCN']['UE']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['UE']['namespace'])
 
     # generate the inventory
     inventory = pos.generate_inventory(data=data, user=user, id=id)
@@ -382,7 +299,7 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_ro
     return {"identifier": id}
 
 @app.get("/pos/script/{id}")
-async def get_pos_script(id: str):
+async def get_pos_script(id: str, user: dict = Depends(validate_token)):
     try:
         s3_bucket = get_s3_bucket()
 
@@ -425,36 +342,27 @@ class StateUpdate(BaseModel):
         return normalized_value
 
 @app.patch("/r2lab/{device}/")
-async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict = Depends(check_role(["user"]))):
+async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict = Depends(validate_token)):
     """
-    Change the power state of a specified R2Lab device.
-
-    This endpoint allows users to change the power state of a specific 
-    R2Lab device to either ON or OFF.
+    PATCH /r2lab/{device}/ endpoint to update the state of an R2lab device. The state can be set to `"ON"` or `"OFF"`.
 
     Parameters:
-    - **state_update**: StateUpdate
-        - Contains the state to set for the device. Must be either "ON" 
-          or "OFF".
-    - **device**: R2labDevices
-        - The specific device in the R2Lab whose power state will be 
-          modified.
-    - **user**: dict
-        - A dictionary representing the authenticated user, obtained 
-          from the `check_role` dependency to ensure the user has the 
-          correct permissions.
+    state_update (StateUpdate): A dictionnary wich key `state` contains the
+                                updated state for the device. The state is
+                                either `"ON"` or `"OFF"`, and is normalized to
+                                uppercase.
+    device (R2labDevices): The name of the R2lab device whose state is being
+                           updated.
+    user (dict): Authenticated user information.
 
     Returns:
-    - **JSON response** containing the output change in R2LAB structured as:
-      ```json
-      {
-          "output": "<r2lab_output>"
-      }
-      ```
+    dict: A dictionary containing the output of the power state update.
 
     Raises:
-    - **HTTPException**: If an error occurs while executing the command, 
-      the user will receive an appropriate HTTP error response.
+    ValueError: If the state is neither `"ON"` nor `"OFF"`.
+
+    Note:
+    The public key to use to connect to R2LAB is read from `/id_rsa`.
     """
     normalized_state = state_update.state.upper()
     if normalized_state == "ON":
@@ -468,7 +376,45 @@ async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict
 
 
 @app.get("/prefix/")
-async def get_prefix(user: dict = Depends(check_role(["admin", "user"]))):
+async def get_prefix(user: dict = Depends(validate_token)):
+    """
+    GET /prefix/ endpoint to retrieve the subnet and load balancer (LB) IP
+    allocated to the project associated with the user. If no resources have been
+    allocated yet, it attempts to allocate a new subnet and LB IP. 
+
+    Parameters:
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing the allocated subnet (key `subnet`) and load
+    balancer IP (key `lb`) for the user's project.
+
+    Example Response:
+    ```
+    {
+        "subnet": "192.0.2.0/24",
+        "lb": "198.51.100.1"
+    }
+    ```
+
+    Behavior:
+    - If the project does not already have an allocated subnet and LB IP:
+      - A subnet is taken from `db['cluster']['subnets']` and assigned to the project.
+      - A load balancer IP is popped from `db['metallb']['ips']` and assigned to the project.
+    - If the project already has allocated resources, they are returned without allocating new ones.
+
+    Raises:
+    HTTPException: 
+    - 404 if there are no available subnets to allocate.
+    - 404 if there are no available LB IPs to allocate.
+
+    Notes:
+    - The `db` object is expected to contain two key parts:
+      - `db['cluster']['subnets']`: A list of available subnets.
+      - `db['metallb']['ips']`: A list of available load balancer IPs.
+    - The function ensures resources are allocated only once per project.
+
+    """
     proj = user['proj']
 
     if proj not in db['cluster']['allocated'].keys():
@@ -495,7 +441,31 @@ async def get_prefix(user: dict = Depends(check_role(["admin", "user"]))):
         }
 
 @app.delete("/prefix/")
-async def get_prefix(user: dict = Depends(check_role(["admin", "user"]))):
+async def get_prefix(user: dict = Depends(validate_token)):
+    """
+    DELETE /prefix/ endpoint to release the subnet and load balancer (LB) IP
+    allocated to the user's project. The released resources are returned to
+    their respective pools.
+
+    Parameters:
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing the released subnet (key `subnet`) and load
+    balancer IP (key `lb`) for the user's project.
+
+    Example Response:
+    ```
+    {
+        "subnet": "192.0.2.0/24",
+        "lb": "198.51.100.1"
+    }
+    ```
+
+    Raises:
+    HTTPException: 
+    - 404 if no subnet or LB IP is allocated to the user's project.
+    """
     proj = user['proj']
 
     if proj not in db['cluster']['allocated'].keys():
