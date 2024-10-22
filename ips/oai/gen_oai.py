@@ -156,6 +156,12 @@ def build(data: dict, zip_buffer):
 
   gcn = core['GCN']
 
+  if 'gnbconf' in gcn['RAN'].keys():
+    gnbconf = gcn['RAN']['gnbconf']
+    if gnbconf == "" or gnbconf == None:
+      del gcn['RAN']['gnbconf']
+
+
   # Prepare rendering environment
   environment = Environment(loader=FileSystemLoader(templates_dir))
   environment.filters.update({'to_yaml': to_yaml})
