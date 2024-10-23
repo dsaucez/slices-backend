@@ -537,8 +537,15 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
             }
 
 
+import yaml
+class YAMLResponse(Response):
+    media_type = "application/x-yaml"  # Set the YAML MIME type
+
+    def render(self, content: dict) -> bytes:
+        return yaml.dump(content).encode("utf-8")  # Serialize to YAML and encode as bytes
+
 @app.post("/k8s/")
-async def post_kubeconfig(user: dict = Depends(validate_token)):
+async def post_kubeconfig(user: dict = Depends(validate_token), response_class=YAMLResponse):
     """
     PATCH /r2lab/{device}/ endpoint to update the state of an R2lab device. The state can be set to `"ON"` or `"OFF"`.
 
@@ -564,4 +571,4 @@ async def post_kubeconfig(user: dict = Depends(validate_token)):
     cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
     output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
 
-    return {"output": output}
+    return output
