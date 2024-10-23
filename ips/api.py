@@ -564,7 +564,7 @@ async def post_kubeconfig(user: dict = Depends(validate_token)):
 
     cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
     output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
-    config = yaml.load(output)
+    config = yaml.safe_load(output)
 
     return FileResponse("config.yaml", media_type="application/x-yaml", filename=yaml.dump(config))
 
