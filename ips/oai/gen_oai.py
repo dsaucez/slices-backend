@@ -123,6 +123,8 @@ def render(environment, templatepath, gcn):
   plmn_support_list = plmnSupportList(gcn)
   served_guami_list = servedGuamiList(gcn)
 
+  gcn['multus']['routes'] = [{'dst': '172.24.0.0/13','gw': '172.29.0.10'}]
+
   content = template.render(
       ues     = ues,
       mcc     = gcn['mcc'],
