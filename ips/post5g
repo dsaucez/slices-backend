@@ -2,7 +2,7 @@
 
 # Function to display usage information
 usage() {
-  echo "Usage: $0 experiment [get|launch|prefix] <experiment_name>"
+  echo "Usage: $0 experiment [get|launch|prefix] <experiment_name> [--release]"
   echo "       $0 nodes [start|stop] <node_name>"
   exit 1
 }
@@ -52,8 +52,24 @@ get_prefix() {
   local experiment_name="$2"
 
   TOKEN="$(slices auth id-token pos)"
-  curl -s -X GET "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+  # curl -s -X GET "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+
+  XP_TOKEN="$(slices experiment jwt $experiment_name)"
+  curl -X 'POST' "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H 'Content-Type: application/json' -H "Bearer: ${TOKEN}" -d "{\"token\": \"$XP_TOKEN\"}"
 }
+
+# Function to release floating IPs for a project
+release_prefix() {
+  local project_id="$1"
+  local experiment_name="$2"
+
+  TOKEN="$(slices auth id-token pos)"
+  # curl -s -X GET "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H "Bearer: ${TOKEN}"
+
+  XP_TOKEN="$(slices experiment jwt $experiment_name)"
+  curl -X 'DELETE' "https://post5g-backend.slices-be.eu/prefix/"   -H 'accept: application/json' -H 'Content-Type: application/json' -H "Bearer: ${TOKEN}" -d "{\"token\": \"$XP_TOKEN\"}"
+}
+
 
 # Function to fetch experiment details
 get_experiment() {
@@ -79,6 +95,8 @@ get_experiment() {
   curl -s -X GET "https://post5g-backend.slices-be.eu/pos/script/${experiment_id}"   -H 'accept: application/json' -H "Bearer: ${TOKEN}" --output ${experiment_id}.zip
   unzip -qq -o -d reference_implementation-develop/ ${experiment_id}.zip
   chmod a+r -R reference_implementation-develop/
+
+  curl -X 'POST' 'https://post5g-backend.slices-be.eu/k8s/' -H 'accept: application/json'  -H "Bearer: ${TOKEN}" -d '' -s > ~/kubeconfig-pos
 
   echo "Details for experiment $experiment_name saved in $DIR"
 }
@@ -118,7 +136,16 @@ if [ "$type" == "experiment" ]; then
     usage
   fi
 
+  release_flag="false"
+  if [ "$#" -ge 4 ] && [ "$4" == "--release" ]; then
+    release_flag="true"
+  fi
+  if [ "$#" -ge 4 ] && [ "$4" != "--release" ]; then
+    usage
+  fi
+
   experiment_name="$3"
+
   project_id=$(slices project show -f json | jq .name | tr -d \")
 
   case "$command" in
@@ -129,7 +156,12 @@ if [ "$type" == "experiment" ]; then
       launch_experiment "$project_id" "$experiment_name"
       ;;
     prefix)
-      get_prefix "$project_id" "$experiment_name"
+      # get_prefix "$project_id" "$experiment_name"
+      if [ "$release_flag" == "true" ]; then
+        release_prefix "$project_id" "$experiment_name"
+      else
+        get_prefix "$project_id" "$experiment_name"
+      fi
       ;;
     *)
       echo "Error: Invalid command '$command'."
@@ -163,39 +195,3 @@ else
   echo "Error: Invalid type '$type'."
   usage
 fi
-
-
-
-# # Check that the correct number of arguments are passed
-# if [ "$#" -lt 3 ]; then
-#   echo "Error: Insufficient arguments."
-#   usage
-# fi
-
-# # Check that the first argument is "experiment"
-# if [ "$1" != "experiment" ]; then
-#   echo "Error: The first argument must be 'experiment'."
-#   usage
-# fi
-
-# # Assign the second argument to a command and the third to experiment_name
-# command="$2"
-# experiment_name="$3"
-# project_id=$(slices project  show -f json | jq .name | tr -d \")
-
-# # Handle the "get" or "launch" commands with functions
-# case "$command" in
-#   get)
-#     get_experiment "$project_id" "$experiment_name"
-#     ;;
-#   launch)
-#     launch_experiment "$project_id"  "$experiment_name"
-#     ;;
-#   prefix)
-#     get_prefix "$project_id"  "$experiment_name"
-#     ;;
-#   *)
-#     echo "Error: Invalid command '$command'."
-#     usage
-#     ;;
-# esac
