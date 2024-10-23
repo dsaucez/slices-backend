@@ -535,3 +535,33 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
     return {"subnet": p,
             "lb": lb
             }
+
+
+@app.post("/k8s/")
+async def post_kubeconfig(user: dict = Depends(validate_token)):
+    """
+    PATCH /r2lab/{device}/ endpoint to update the state of an R2lab device. The state can be set to `"ON"` or `"OFF"`.
+
+    Parameters:
+    state_update (StateUpdate): A dictionnary wich key `state` contains the
+                                updated state for the device. The state is
+                                either `"ON"` or `"OFF"`, and is normalized to
+                                uppercase.
+    device (R2labDevices): The name of the R2lab device whose state is being
+                           updated.
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing the output of the power state update.
+
+    Raises:
+    ValueError: If the state is neither `"ON"` nor `"OFF"`.
+
+    Note:
+    The public key to use to connect to R2LAB is read from `/id_rsa`.
+    """
+
+    cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
+    output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+
+    return {"output": output}

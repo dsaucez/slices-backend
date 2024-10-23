@@ -1,0 +1,53 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "$K8SUSER-slicesViewRole"
+subjects:
+- kind: User
+  name: "$K8SUSER"
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: slicesViewRole
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "$K8SUSER-slicesCreateRole"
+subjects:
+- kind: User
+  name: "$K8SUSER"
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: slicesCreateRole
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "$K8SUSER-slicesUpdateRole"
+subjects:
+- kind: User
+  name: "$K8SUSER"
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: slicesUpdateRole
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "$K8SUSER-slicesDeleteRole"
+subjects:
+- kind: User
+  name: "$K8SUSER"
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: slicesDeleteRole
+  apiGroup: rbac.authorization.k8s.io
+
