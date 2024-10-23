@@ -375,19 +375,42 @@ async def post_r2lab(state_update: StateUpdate, device: R2labDevices, user: dict
     return {"output": output}
 
 
-@app.get("/prefix/")
-async def get_prefix(user: dict = Depends(validate_token)):
+# Pydantic model to define the expected POST body structure
+class TokenRequest(BaseModel):
+    token: str
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "token": "an experiment token, generated with, e.g., `slices experiment jwt <experiment name>`"
+            }
+        }
+
+@app.post("/prefix/")
+async def post_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
-    GET /prefix/ endpoint to retrieve the subnet and load balancer (LB) IP
-    allocated to the project associated with the user. If no resources have been
-    allocated yet, it attempts to allocate a new subnet and LB IP. 
+    POST /prefix/ endpoint to retrieve the subnet and load balancer (LB) IP
+    allocated to the experiment associated with the user. If no resources have
+    been allocated yet, it attempts to allocate a new subnet and LB IP. 
+    This endpoint accepts a JSON body containing an experiment JWT token (e.g.,
+    generated with `slices experiment jwt <experiment name>`).
+
 
     Parameters:
+    request_body (TokenRequest): The body of the POST request containing the JWT
+                                experiment token.
     user (dict): Authenticated user information.
 
     Returns:
     dict: A dictionary containing the allocated subnet (key `subnet`) and load
-    balancer IP (key `lb`) for the user's project.
+    balancer IP (key `lb`) for the user's experiment.
+
+    
+    Example Request body example (JSON):
+    ```
+    {
+        "token": "your_jwt_token_here"
+    }
+    ```
 
     Example Response:
     ```
@@ -398,10 +421,10 @@ async def get_prefix(user: dict = Depends(validate_token)):
     ```
 
     Behavior:
-    - If the project does not already have an allocated subnet and LB IP:
-      - A subnet is taken from `db['cluster']['subnets']` and assigned to the project.
-      - A load balancer IP is popped from `db['metallb']['ips']` and assigned to the project.
-    - If the project already has allocated resources, they are returned without allocating new ones.
+    - If the experiment does not already have an allocated subnet and LB IP:
+      - A subnet is taken from `db['cluster']['subnets']` and assigned to the experiment.
+      - A load balancer IP is popped from `db['metallb']['ips']` and assigned to the experiment.
+    - If the experiment already has allocated resources, they are returned without allocating new ones.
 
     Raises:
     HTTPException: 
@@ -412,28 +435,37 @@ async def get_prefix(user: dict = Depends(validate_token)):
     - The `db` object is expected to contain two key parts:
       - `db['cluster']['subnets']`: A list of available subnets.
       - `db['metallb']['ips']`: A list of available load balancer IPs.
-    - The function ensures resources are allocated only once per project.
+    - The function ensures resources are allocated only once per experiment.
 
     """
-    proj = user['proj']
+    # exp = user['proj']
 
-    if proj not in db['cluster']['allocated'].keys():
+    token = request_body.token
+    try:
+        data = validate_token(token)
+        exp = data['sub']
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Experiment token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid experiment token")
+
+    if exp not in db['cluster']['allocated'].keys():
         try:
             p = db['cluster']['subnets'].pop()
-            db['cluster']['allocated'][proj] = p
+            db['cluster']['allocated'][exp] = p
         except IndexError:
             raise HTTPException(status_code=404, detail="No prefix is available")
 
         try:
             lb = db['metallb']['ips'].pop()
-            db['metallb']['allocated'][proj] = lb
+            db['metallb']['allocated'][exp] = lb
         except IndexError:
             raise HTTPException(status_code=404, detail="No LB IP is available")    
         
 
     else:
-        p = db['cluster']['allocated'][proj]
-        lb = db['metallb']['allocated'][proj]
+        p = db['cluster']['allocated'][exp]
+        lb = db['metallb']['allocated'][exp]
 
     return {
         "subnet": p,
@@ -441,19 +473,29 @@ async def get_prefix(user: dict = Depends(validate_token)):
         }
 
 @app.delete("/prefix/")
-async def get_prefix(user: dict = Depends(validate_token)):
+async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
     DELETE /prefix/ endpoint to release the subnet and load balancer (LB) IP
     allocated to the user's project. The released resources are returned to
-    their respective pools.
+    their respective pools. This endpoint accepts a JSON body containing an
+    experiment JWT token (e.g., generated with
+    `slices experiment jwt <experiment name>`).
 
     Parameters:
+    request_body (TokenRequest): The body of the DELETE request containing the JWT
+                                 experiment token.
     user (dict): Authenticated user information.
 
     Returns:
     dict: A dictionary containing the released subnet (key `subnet`) and load
     balancer IP (key `lb`) for the user's project.
 
+    Example Request body example (JSON):
+    ```
+    {
+        "token": "your_jwt_token_here"
+    }
+    ```
     Example Response:
     ```
     {
@@ -468,17 +510,27 @@ async def get_prefix(user: dict = Depends(validate_token)):
     """
     proj = user['proj']
 
-    if proj not in db['cluster']['allocated'].keys():
+    token = request_body.token
+    try:
+        data = validate_token(token)
+        exp = data['sub']
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Experiment token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid experiment token")
+
+
+    if exp not in db['cluster']['allocated'].keys():
         raise HTTPException(status_code=404, detail="No prefix is allocated to your project")
     
-    p = db['cluster']['allocated'][proj]
+    p = db['cluster']['allocated'][exp]
     db['cluster']['subnets'].append(p)
 
-    lb = db['metallb']['allocated'][proj]
+    lb = db['metallb']['allocated'][exp]
     db['metallb']['ips'].append(lb)
 
-    del db['cluster']['allocated'][proj]
-    del db['metallb']['allocated'][proj]
+    del db['cluster']['allocated'][exp]
+    del db['metallb']['allocated'][exp]
 
     return {"subnet": p,
             "lb": lb
