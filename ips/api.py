@@ -537,15 +537,8 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
             }
 
 
-import yaml
-class YAMLResponse(Response):
-    media_type = "application/x-yaml"  # Set the YAML MIME type
-
-    def render(self, content: dict) -> bytes:
-        return yaml.dump(content).encode("utf-8")  # Serialize to YAML and encode as bytes
-
 @app.post("/k8s/")
-async def post_kubeconfig(user: dict = Depends(validate_token), response_class=YAMLResponse):
+async def post_kubeconfig(user: dict = Depends(validate_token)):
     """
     PATCH /r2lab/{device}/ endpoint to update the state of an R2lab device. The state can be set to `"ON"` or `"OFF"`.
 
