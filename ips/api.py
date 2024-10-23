@@ -9,7 +9,7 @@ from ipaddr import IPAddress, IPv4Network
 import json
 from typing import List
 import itertools
-from starlette.responses import StreamingResponse, FileResponse
+from starlette.responses import StreamingResponse
 from io import StringIO
 from io import BytesIO
 import zipfile
@@ -538,6 +538,11 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
             }
 
 
+def string_streamer(data: str):
+    """Generator function to yield parts of a string."""
+    for char in data:
+        yield char
+
 @app.post("/k8s/")
 async def post_kubeconfig(user: dict = Depends(validate_token)):
     """
@@ -566,5 +571,5 @@ async def post_kubeconfig(user: dict = Depends(validate_token)):
     output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
     config = yaml.safe_load(output)
 
-    return FileResponse("config.yaml", media_type="application/x-yaml", filename=yaml.dump(config))
+    return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
 
