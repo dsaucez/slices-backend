@@ -18,6 +18,7 @@ from botocore.client import Config
 import uuid
 import paramiko
 import os
+import yaml
 
 import pos
 
