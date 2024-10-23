@@ -9,7 +9,7 @@ from ipaddr import IPAddress, IPv4Network
 import json
 from typing import List
 import itertools
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, FileResponse
 from io import StringIO
 from io import BytesIO
 import zipfile
@@ -570,6 +570,7 @@ async def post_kubeconfig(user: dict = Depends(validate_token), response_class=Y
 
     cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
     output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+    config = yaml.load(output)
 
-    return Response(content=yaml.dump(output), media_type="application/x-yaml")
+    return FileResponse("config.yaml", media_type="application/x-yaml", filename=yaml.dump(config))
 
