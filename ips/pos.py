@@ -4,6 +4,7 @@ from typing import Optional
 import oai
 import yaml
 import oai.gen_oai
+import json
 
 class PosScriptData(BaseModel):
     experiment_id: str
@@ -96,8 +97,9 @@ def generate_playbook(data: PosScriptData, user: dict, id: str):
   return playbook
 
 def generate_oai(data: PosScriptData, user: dict, id: str, zip_buffer):
-   oai.gen_oai.build(data = dict(data), zip_buffer=zip_buffer)
-   return {}
+   _oai = oai.gen_oai.build(data = dict(data), zip_buffer=zip_buffer)
+
+   return json.dumps(_oai)
 
 
 def generate_xp(data: PosScriptData, user: dict, id: str):

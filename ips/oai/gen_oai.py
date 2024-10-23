@@ -1,5 +1,6 @@
 import os
 import yaml
+import json
 from jinja2 import Environment, FileSystemLoader, BaseLoader
 
 import requests
@@ -18,7 +19,7 @@ def genIPs(gcn):
   base_ip = net.ip + 2
   hostInterface = gcn['multus']['hostInterface']
 
-  prefixlen = 21
+  prefixlen = 21  # XXX: DSA: should not be hardcoded
 
   ips = {
     "amf": {
@@ -123,7 +124,7 @@ def render(environment, templatepath, gcn):
   plmn_support_list = plmnSupportList(gcn)
   served_guami_list = servedGuamiList(gcn)
 
-  gcn['multus']['routes'] = [{'dst': '172.24.0.0/13','gw': '172.29.0.10'}]
+  gcn['multus']['routes'] = [{'dst': '172.24.0.0/13','gw': '172.29.0.10'}]  # XXX: DSA: should not be hardcoded!
 
   content = template.render(
       ues     = ues,
@@ -174,7 +175,6 @@ def build(data: dict, zip_buffer):
     if "ips" not in gcn['multus']:
       gcn['multus']['ips'] = genIPs(gcn)
 
-
   # Render files
   for item in tpls["templates"]:
     path = item['template']
@@ -187,3 +187,4 @@ def build(data: dict, zip_buffer):
     # createFile(content, item['output'])
     with zipfile.ZipFile(zip_buffer, "a") as zip_file:
       zip_file.writestr(item['output'], content)
+  return {'addresses': gcn['multus']['ips']}

@@ -235,6 +235,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     if "namespace" in data.params_5g['GCN']['UE']:
         data.params_5g['GCN']['UE']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['UE']['namespace'])
 
+    # Create a Zip file with all content
+    zip_buffer = BytesIO()
+
     # generate the inventory
     inventory = pos.generate_inventory(data=data, user=user, id=id)
 
@@ -249,9 +252,17 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 
     sh_5g = pos.generate_sh5g(data=data, user=user, id=id)
 
-
     # generate params parameters
     params = pos.generate_params(data=data, user=user, id=id)
+    
+    # generate OAI configuration
+    try:
+        pos.generate_oai(data=data, user=user, id=id, zip_buffer=zip_buffer)
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as err:
+        full_traceback = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=str(full_traceback))
     
     # generate params 5g parameters
     params5g = pos.generate_params5g(data=data, user=user, id=id)
@@ -261,10 +272,8 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 
     xp = pos.generate_xp(data=data, user=user, id=id)
 
-    # Create a Zip file with all content
-    zip_buffer = BytesIO()
     # Add content to the zip file
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+    with zipfile.ZipFile(zip_buffer, "a") as zip_file:
         zip_file.writestr("pos/deploy.sh", deploy)
         zip_info = zip_file.getinfo("pos/deploy.sh")
         zip_info.external_attr = 0o755 << 16
@@ -283,14 +292,6 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
         zip_file.writestr("pos/get_xp.sh", xp)
         zip_info = zip_file.getinfo("pos/get_xp.sh")
         zip_info.external_attr = 0o755 << 16
-
-    try:
-        pos.generate_oai(data=data, user=user, id=id, zip_buffer=zip_buffer)
-    except ValueError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as err:
-        full_traceback = traceback.format_exc()
-        raise HTTPException(status_code=500, detail=str(full_traceback))
 
     zip_buffer.seek(0)
 
