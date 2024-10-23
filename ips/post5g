@@ -96,7 +96,7 @@ get_experiment() {
   unzip -qq -o -d reference_implementation-develop/ ${experiment_id}.zip
   chmod a+r -R reference_implementation-develop/
 
-  curl -X 'POST' 'https://post5g-backend.slices-be.eu/k8s/' -H 'accept: application/json'  -H "Bearer: ${TOKEN}" -d '' -s > ~/kubeconfig-pos
+  curl -X 'POST' 'https://post5g-backend.slices-be.eu/k8s/centralhub' -H 'accept: application/json'  -H "Bearer: ${TOKEN}" -d '' -s > ~/kubeconfig-pos
 
   echo "Details for experiment $experiment_name saved in $DIR"
 }

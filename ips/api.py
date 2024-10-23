@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import ip as iplib
 from ipaddr import IPAddress, IPv4Network
 import json
-from typing import List
+from typing import List, Optional
 import itertools
 from starlette.responses import StreamingResponse
 from io import StringIO
@@ -543,33 +543,34 @@ def string_streamer(data: str):
     for char in data:
         yield char
 
-@app.post("/k8s/")
-async def post_kubeconfig(user: dict = Depends(validate_token)):
+@app.post("/k8s/{cluster}")
+async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = Depends(validate_token)):
     """
-    PATCH /r2lab/{device}/ endpoint to update the state of an R2lab device. The state can be set to `"ON"` or `"OFF"`.
+    POST /k8s/{cluster}/ endpoint to retrieve and return the kubeconfig file for a specific Kubernetes cluster.
 
     Parameters:
-    state_update (StateUpdate): A dictionnary wich key `state` contains the
-                                updated state for the device. The state is
-                                either `"ON"` or `"OFF"`, and is normalized to
-                                uppercase.
-    device (R2labDevices): The name of the R2lab device whose state is being
-                           updated.
+    -----------
+    cluster : Optional[str], default="centralhub"
+        The name of the Kubernetes cluster to target. If not provided, it defaults to "centralhub".
+
     user (dict): Authenticated user information.
 
     Returns:
-    dict: A dictionary containing the output of the power state update.
+    --------
+    StreamingResponse:
+        A streaming response that yields the kubeconfig in YAML format. The response is of MIME type `application/x-yaml`.
 
     Raises:
-    ValueError: If the state is neither `"ON"` nor `"OFF"`.
-
-    Note:
-    The public key to use to connect to R2LAB is read from `/id_rsa`.
+    -------
+    HTTPException: 
+    - 404 if the cluster does not exist.
     """
-
-    cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
-    output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
-    config = yaml.safe_load(output)
+    if cluster == "centralhub":
+        cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
+        output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+        config = yaml.safe_load(output)
+    else:
+        raise HTTPException(status_code=404, detail="The cluster doesn't exist")
 
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
 
