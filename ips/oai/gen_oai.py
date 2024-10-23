@@ -18,42 +18,44 @@ def genIPs(gcn):
   base_ip = net.ip + 2
   hostInterface = gcn['multus']['hostInterface']
 
+  prefixlen = 21
+
   ips = {
     "amf": {
-      "n2": {'ip': str(base_ip), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "n2": {'ip': str(base_ip), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "smf": {
-      "n4": {'ip': str(base_ip + 1), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "n4": {'ip': str(base_ip + 1), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "upf": {
-      "n3": {'ip': str(base_ip + 2), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n4": {'ip': str(base_ip + 3), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n6": {'ip': str(base_ip + 4), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "n3": {'ip': str(base_ip + 2), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n4": {'ip': str(base_ip + 3), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n6": {'ip': str(base_ip + 4), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "gnb": {
-      "n2": {'ip': str(base_ip + 5), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': str(base_ip + 6), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 5), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 6), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
     },
     "du": {
-      "f1": {'ip': str(base_ip + 7), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "f1": {'ip': str(base_ip + 7), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     }, #
     "cu": {
-      "f1": {'ip': str(base_ip + 8), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n2": {'ip': str(base_ip + 9), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': str(base_ip + 10), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "f1": {'ip': str(base_ip + 8), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 9), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 10), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "cucp": {
-      "e1": {'ip': str(base_ip + 11), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n2": {'ip': str(base_ip + 12), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "f1": {'ip': str(base_ip + 8), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "e1": {'ip': str(base_ip + 11), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n2": {'ip': str(base_ip + 12), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "f1": {'ip': str(base_ip + 8), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "cuup": {
-      "e1": {'ip': str(base_ip + 14), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "n3": {'ip': str(base_ip + 15), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface},
-      "f1": {'ip': str(base_ip + 16), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface}
+      "e1": {'ip': str(base_ip + 14), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "n3": {'ip': str(base_ip + 15), 'prefixlen': prefixlen, 'hostInterface': hostInterface},
+      "f1": {'ip': str(base_ip + 16), 'prefixlen': prefixlen, 'hostInterface': hostInterface}
     },
     "trafficserver": {
-      'ip': str(base_ip + 17), 'prefixlen': net.prefixlen, 'hostInterface': hostInterface
+      'ip': str(base_ip + 17), 'prefixlen': prefixlen, 'hostInterface': hostInterface
     },
     "nrf": {
       "loadBalancerIP": gcn['core']['nrfLoadBalancerIP']
