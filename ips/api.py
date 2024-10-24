@@ -224,8 +224,12 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     # Generate an ID
     id=data.experiment_id
 
-
-    print (data.params_5g)
+    p5g = data.params_5g
+    slices = p5g['GCN']['slices']
+    for slice in slices:
+        if type(slice['snssai']['sst']) == bool and slice['snssai']['sst']:
+            slice['snssai']['sst'] = 1
+        slice['qos_profile']['5qi'] = int(slice['qos_profile']['5qi'])
 
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
