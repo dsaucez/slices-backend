@@ -229,7 +229,6 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     for slice in slices:
         if type(slice['snssai']['sst']) == bool and slice['snssai']['sst']:
             slice['snssai']['sst'] = 1
-        slice['qos_profile']['5qi'] = int(slice['qos_profile']['5qi'])
 
     print( data.params_5g)
 
