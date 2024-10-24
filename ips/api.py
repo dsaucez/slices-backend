@@ -231,6 +231,8 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
             slice['snssai']['sst'] = 1
         slice['qos_profile']['5qi'] = int(slice['qos_profile']['5qi'])
 
+    print( data.params_5g)
+
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
