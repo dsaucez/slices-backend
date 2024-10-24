@@ -224,6 +224,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     # Generate an ID
     id=data.experiment_id
 
+
+    print (data.params_5g)
+
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
