@@ -39,9 +39,16 @@ stop_node(){
   }'
 }
 
+xp_expauth.ilabt.imec.be_01jazhwr8yfcf8p811ezqry6z9
+
 get_experiment_id(){
   local experiment_name="$1"
-  local experiment_id=$(slices experiment show $experiment_name --format json |jq .id | tr -d \")
+
+  if [[ "$experiment_name" == xp_expauth.ilabt.imec.be_* ]]; then
+    local $experiment_id = $experiment_name
+  else
+    local experiment_id=$(slices experiment show $experiment_name --format json |jq .id | tr -d \")
+  fi
 
   echo $experiment_id
 }

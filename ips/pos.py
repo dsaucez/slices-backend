@@ -79,6 +79,10 @@ def generate_params(data: PosScriptData, user: dict, id: str):
 def generate_params5g(data: PosScriptData, user: dict, id: str):
   template = env.get_template('params.5g.yaml.j2')
 
+  # XXX TODO dsaucez change, this is just a quickfix
+  if 'config_files' in data.params_5g['GCN']:
+    data.params_5g['GCN']['config_files'] = 'oai-cn5g-fed-custom/'
+
   params = template.render(dict(data) | user | {"id": id})
 
   return params

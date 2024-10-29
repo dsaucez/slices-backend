@@ -1,4 +1,5 @@
 from enum import Enum
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
 from pydantic import IPvAnyAddress, BaseModel, Field, field_validator
@@ -160,6 +161,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Code to run on startup
+
+    yield  # This yields control to the app during its run
+
+    # Code to run on shutdown
+    await shutdown_method()  # Replace with your specific shutdown method
+
+async def shutdown_method():
+    with open("/db.json", "w") as file:
+        json.dump(db, file, indent=4)
+
+app.router.lifespan_context = lifespan
+
 def expiration_time(delta=60):
     """
     Calculate the expiration time in UTC.
@@ -223,8 +239,6 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 # async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
     id=data.experiment_id
-
-    print( data.params_5g)
 
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
