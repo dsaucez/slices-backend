@@ -39,7 +39,14 @@ $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
-ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
+cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
+$POS nodes copy --dest id_rsa_pos.pub $DEPLOY_NODE ~/id_rsa_pos.pub
+cat <<EOF | pos command launch $DEPLOY_NODE -i -
+#!/usr/bin/bash
+cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
+EOF
+
+#ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
 
 ## secret files
 $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
