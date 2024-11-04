@@ -80,6 +80,7 @@ echo "token: $DMI_TOKEN" > pos/dmi_token
 ## secret files
 $POS nodes copy --dest .pos/dmi_token $DEPLOY_NODE  pos/dmi_token
 
+if [ ! -d ~/mini-dmi ]; then git clone https://gitlab.inria.fr/slices-ri/mini-dmi.git ~/mini-dmi; fi
 $POS nodes copy --recursive --dest mini-dmi $DEPLOY_NODE ~/mini-dmi
 $POS nodes copy --recursive --dest mini-dmi/storage-client-playground/ $DEPLOY_NODE dataset.tar.gz
 
