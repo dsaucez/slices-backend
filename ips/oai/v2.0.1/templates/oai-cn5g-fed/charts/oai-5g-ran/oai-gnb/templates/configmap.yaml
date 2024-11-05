@@ -29,7 +29,7 @@ data:
 {% raw %}
     Active_gNBs = ( "{{ .Values.config.gnbName}}");
     # Asn1_verbosity, choice in: none, info, annoying
-    Asn1_verbosity = "none";
+    Asn1_verbosity = "annoying";
     gNBs =
     (
       {
