@@ -2,6 +2,9 @@ from enum import Enum
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
+import logging
+from uvicorn.config import LOGGING_CONFIG
+
 from pydantic import IPvAnyAddress, BaseModel, Field, field_validator
 import traceback
 from datetime import datetime, timedelta, timezone
@@ -160,6 +163,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
+LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+
+# Apply the updated configuration
+logging.config.dictConfig(LOGGING_CONFIG)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
