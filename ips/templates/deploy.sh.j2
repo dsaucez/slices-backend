@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+tar -cvvf dataset.tar ../reference_implementation-develop                       # snapshot is the very first thing to do!
 XP={{ name }}
 
 KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
@@ -37,6 +38,7 @@ wait
 # 0. Prepare deployment node
 $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
+$POS commands launch $DEPLOY_NODE -- mkdir -p results
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
 cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
@@ -80,7 +82,9 @@ ARTIFACT_SIZE=$(( $RESULTS_SIZE + $POS_SIZE ))
 echo $ARTIFACT_SIZE
 echo $RESULTS_FOLDER
 
-tar -cvvzf dataset.tar.gz pos -C $RESULTS_FOLDER . 
+scp -r -i ~/.ssh/id_rsa ${DEPLOY_NODE}:results . 
+tar -rvvf dataset.tar  results -C $RESULTS_FOLDER . 
+gzip dataset.tar
 
 DMI_TOKEN=$(slices auth get-for-audience https://mrs-portal.slices-staging.slices-be.eu)
 echo "token: $DMI_TOKEN" > pos/dmi_token
