@@ -115,14 +115,7 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: str = Security(api_key_header)):
-    # List of paths that do not require token validation
-    exempt_paths = ["/ns"]
-    
-    # Skip validation if the path is in the exempt list
-    if request.url.path in exempt_paths:
-        return
-    
+def validate_token(request: Request, token: str = Security(api_key_header)):    
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -608,30 +601,3 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
         raise HTTPException(status_code=404, detail="The cluster doesn't exist")
 
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
-
-# Define a Pydantic model to parse the incoming JSON data
-class AdmissionReviewRequest(BaseModel):
-    apiVersion: str
-    kind: str
-    request: dict
-
-
-class Item(BaseModel):
-    name: str
-    description: str
-    price: float
-
-@app.post("/ns")
-async def create_item(request: Request, item: Item):
-    # Access headers from the request
-    headers = request.headers
-    custom_header = headers.get("X-Custom-Header", "No custom header found")
-    
-    # Access the body parsed as the Pydantic model
-    body = item.model_dump()
-
-    return {
-        "headers": dict(headers),  # Convert headers to dict to return them in the response
-        "custom_header": custom_header,
-        "body": body
-    }
