@@ -117,6 +117,7 @@ def check_role(allowed_roles: List[str]):
 
 def validate_token(request: Request, token: str = Security(api_key_header)):
     print ("ICI")
+    dsfds
 
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
@@ -605,7 +606,7 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 
 from typing import Dict, Any
 
-@app.post("/ns", dependencies=[])
+@app.post("/ns")
 async def post_ns(body: Dict[str, Any]):
     operation = body["request"]["operation"]
     user = body["request"]["userInfo"]["username"]
