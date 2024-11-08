@@ -607,5 +607,5 @@ from typing import Dict, Any
 @app.post("/ns")
 async def post_ns(body: Dict[str, Any]):
     print (body)
-    print (body["userInfo"]["username"])
+    print (body["request"]["userInfo"]["username"])
     return {"body": body}
