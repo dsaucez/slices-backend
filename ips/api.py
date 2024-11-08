@@ -617,9 +617,9 @@ class AdmissionReviewRequest(BaseModel):
 
 @app.post("/ns")
 async def post_ns(request: Request):
-    print(request.json())
-    # body = await request.json()
-    # admission_request = AdmissionReviewRequest(**body)
+    body = await request.json()
+    admission_request = AdmissionReviewRequest(**body)
+    print(admission_request)
 
     # # Check if the request is for creating a namespace
     # if admission_request.request["kind"]["kind"] == "Namespace" and admission_request.request["operation"] == "CREATE":
