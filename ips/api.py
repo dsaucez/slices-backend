@@ -158,6 +158,7 @@ db = load_db()
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
 def vvalidate_token(request: Request):
+    logging.INFO("coucou")
     return {}
 
 app = FastAPI(dependencies=[Depends(vvalidate_token)])
