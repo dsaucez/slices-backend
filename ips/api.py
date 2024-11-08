@@ -162,7 +162,9 @@ db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
-app = FastAPI(dependencies=[Depends(validate_token)])
+app = FastAPI()
+#app = FastAPI(dependencies=[Depends(validate_token)])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -613,7 +615,7 @@ class AdmissionReviewRequest(BaseModel):
     kind: str
     request: dict
 
-@app.post("/ns1")
+@app.post("/ns")
 async def post_ns(request: Request):
     body = await request.json()
     admission_request = AdmissionReviewRequest(**body)
