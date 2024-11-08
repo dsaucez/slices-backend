@@ -617,7 +617,7 @@ class AdmissionReviewRequest(BaseModel):
 
 @app.post("/ns")
 async def post_ns(request: Request):
-    print(request)
+    print(request.json)
     # body = await request.json()
     # admission_request = AdmissionReviewRequest(**body)
 
