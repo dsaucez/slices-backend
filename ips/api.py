@@ -115,7 +115,9 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: str = Security(api_key_header)):    
+def validate_token(request: Request, token: str = Security(api_key_header)):
+    print ("ICI")
+
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
