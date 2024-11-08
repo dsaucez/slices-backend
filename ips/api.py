@@ -115,7 +115,11 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
+def get_token(token: str = Security(api_key_header, auto_error=False)) -> Optional[str]:
+    return token
+
+#def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
+def validate_token(request: Request, token: Optional[str] = Depends(get_token)):
     logging.INFO("1234")
 
     decoded = jwt.decode(token, options={'verify_signature': False})
