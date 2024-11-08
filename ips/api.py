@@ -617,21 +617,22 @@ class AdmissionReviewRequest(BaseModel):
 
 @app.post("/ns")
 async def post_ns(request: Request):
-    body = await request.json()
-    admission_request = AdmissionReviewRequest(**body)
+    print(request)
+    # body = await request.json()
+    # admission_request = AdmissionReviewRequest(**body)
 
-    # Check if the request is for creating a namespace
-    if admission_request.request["kind"]["kind"] == "Namespace" and admission_request.request["operation"] == "CREATE":
-        user = admission_request.request["userInfo"]["username"]
-        logging.info(f"Namespace creation requested by user: {user}")
+    # # Check if the request is for creating a namespace
+    # if admission_request.request["kind"]["kind"] == "Namespace" and admission_request.request["operation"] == "CREATE":
+    #     user = admission_request.request["userInfo"]["username"]
+    #     logging.info(f"Namespace creation requested by user: {user}")
     
-    # Always allow the creation in this example
-    response = {
-        "apiVersion": admission_request.apiVersion,
-        "kind": "AdmissionReview",
-        "response": {
-            "uid": admission_request.request["uid"],
-            "allowed": True
-        }
-    }
-    return response
+    # # Always allow the creation in this example
+    # response = {
+    #     "apiVersion": admission_request.apiVersion,
+    #     "kind": "AdmissionReview",
+    #     "response": {
+    #         "uid": admission_request.request["uid"],
+    #         "allowed": True
+    #     }
+    # }
+    # return response
