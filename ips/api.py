@@ -606,7 +606,7 @@ class AdmissionReviewRequest(BaseModel):
     kind: str
     request: dict
 
-@app.post("/ns")
+@app.post("/ns", dependencies=[])
 async def validate(request: Request):
     body = await request.json()
     admission_request = AdmissionReviewRequest(**body)
