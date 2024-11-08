@@ -1,6 +1,6 @@
 from enum import Enum
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
+from fastapi import FastAPI, HTTPException, Depends, Security, status, Response, Request
 from fastapi.security import APIKeyHeader
 import logging
 from uvicorn.config import LOGGING_CONFIG
@@ -600,3 +600,29 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
 
+# Define a Pydantic model to parse the incoming JSON data
+class AdmissionReviewRequest(BaseModel):
+    apiVersion: str
+    kind: str
+    request: dict
+
+@app.post("/ns")
+async def validate(request: Request):
+    body = await request.json()
+    admission_request = AdmissionReviewRequest(**body)
+
+    # Check if the request is for creating a namespace
+    if admission_request.request["kind"]["kind"] == "Namespace" and admission_request.request["operation"] == "CREATE":
+        user = admission_request.request["userInfo"]["username"]
+        logging.info(f"Namespace creation requested by user: {user}")
+    
+    # Always allow the creation in this example
+    response = {
+        "apiVersion": admission_request.apiVersion,
+        "kind": "AdmissionReview",
+        "response": {
+            "uid": admission_request.request["uid"],
+            "allowed": True
+        }
+    }
+    return response
