@@ -45,7 +45,7 @@ origins = [
 
 # == API KEY ===================================================================
 import jwt
-api_key_header = APIKeyHeader(name="Bearer")
+api_key_header = APIKeyHeader(name="Bearer", auto_error=False)
 
 def get_s3_bucket():
     credentials = load_db(dbfile="/credentials.json")
