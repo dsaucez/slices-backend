@@ -117,7 +117,6 @@ def check_role(allowed_roles: List[str]):
 
 def validate_token(request: Request, token: str = Security(api_key_header)):
     print ("ICI")
-    dsfds
 
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
@@ -158,7 +157,8 @@ db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
-app = FastAPI(dependencies=[Depends(validate_token)])
+# app = FastAPI(dependencies=[Depends(validate_token)])
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
