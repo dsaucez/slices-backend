@@ -155,8 +155,7 @@ db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
-app = FastAPI()
-#app = FastAPI(dependencies=[Depends(validate_token)])
+app = FastAPI(dependencies=[Depends(validate_token)])
 
 app.add_middleware(
     CORSMiddleware,
