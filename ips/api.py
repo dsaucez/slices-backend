@@ -45,7 +45,7 @@ origins = [
 
 # == API KEY ===================================================================
 import jwt
-api_key_header = APIKeyHeader(name="Bearer")
+api_key_header = APIKeyHeader(name="Bearer", auto_error=False)
 
 def get_s3_bucket():
     credentials = load_db(dbfile="/credentials.json")
@@ -115,12 +115,7 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def get_token(token: str = Security(api_key_header, auto_error=False)) -> Optional[str]:
-    return token
-
-#def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
-def validate_token(request: Request, token: Optional[str] = Depends(get_token)):
-    logging.INFO("1234")
+def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
 
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
