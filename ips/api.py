@@ -157,7 +157,7 @@ db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
-def vvalidate_token(request: Request, token: str = Security(api_key_header)):
+def vvalidate_token(request: Request):
     return {}
 
 app = FastAPI(dependencies=[Depends(vvalidate_token)])
@@ -608,7 +608,6 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
 
 from typing import Dict, Any
-
 @app.post("/ns")
 async def post_ns(body: Dict[str, Any]):
     operation = body["request"]["operation"]
