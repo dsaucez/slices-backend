@@ -601,3 +601,9 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
         raise HTTPException(status_code=404, detail="The cluster doesn't exist")
 
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
+
+
+@app.post("/ns")
+async def post_ns(data):
+    print (data)
+    return data
