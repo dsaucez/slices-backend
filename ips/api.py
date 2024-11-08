@@ -116,7 +116,7 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
-    logging.INFO(request.url)
+    print(request.url)
 
     return {}
 
