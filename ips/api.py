@@ -606,6 +606,7 @@ from typing import Dict, Any
 
 @app.post("/ns")
 async def post_ns(body: Dict[str, Any]):
-    print (body)
-    print (body["request"]["userInfo"]["username"])
+    user = body["request"]["userInfo"]["username"]
+    namespace = body["request"]["namespace"]
+    print (f"{user} : {namespace}")
     return {"body": body}
