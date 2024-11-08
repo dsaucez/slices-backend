@@ -617,6 +617,7 @@ class AdmissionReviewRequest(BaseModel):
 
 @app.post("/ns")
 async def post_ns(request: Request):
+    dfdfd
     body = await request.json()
     admission_request = AdmissionReviewRequest(**body)
 
