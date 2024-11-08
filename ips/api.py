@@ -606,7 +606,7 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 from typing import Dict, Any
 
 @app.post("/ns")
-async def post_ns(body: Dict[str, Any], _: dict=Depends()):
+async def post_ns(body: Dict[str, Any], a: dict=Depends()):
     operation = body["request"]["operation"]
     user = body["request"]["userInfo"]["username"]
     namespace = body["request"]["namespace"]
