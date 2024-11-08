@@ -1,6 +1,6 @@
 from enum import Enum
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Security, status, Response, Request
+from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
 from fastapi.security import APIKeyHeader
 import logging
 from uvicorn.config import LOGGING_CONFIG
@@ -45,7 +45,7 @@ origins = [
 
 # == API KEY ===================================================================
 import jwt
-api_key_header = APIKeyHeader(name="Bearer", auto_error=False)
+api_key_header = APIKeyHeader(name="Bearer")
 
 def get_s3_bucket():
     credentials = load_db(dbfile="/credentials.json")
@@ -115,7 +115,7 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
+def validate_token(token: str = Security(api_key_header)):
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -156,8 +156,6 @@ db = load_db()
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
 app = FastAPI(dependencies=[Depends(validate_token)])
-# app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -601,12 +599,3 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
         raise HTTPException(status_code=404, detail="The cluster doesn't exist")
 
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
-
-from typing import Dict, Any
-@app.post("/ns")
-async def post_ns(body: Dict[str, Any]):
-    operation = body["request"]["operation"]
-    user = body["request"]["userInfo"]["username"]
-    namespace = body["request"]["namespace"]
-    print (f"{user} : {namespace} {operation}")
-    return {"body": body}
