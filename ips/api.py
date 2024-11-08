@@ -116,7 +116,8 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(request: Request, token: str = Security(api_key_header)):
-    print(request.url)
+    logging.info(request.url)
+    exit(0)
     # List of paths that do not require token validation
     exempt_paths = ["/ns"]
     
@@ -615,7 +616,7 @@ class AdmissionReviewRequest(BaseModel):
     request: dict
 
 @app.post("/ns")
-async def validate(request: Request):
+async def post_ns(request: Request):
     body = await request.json()
     admission_request = AdmissionReviewRequest(**body)
 
