@@ -117,6 +117,7 @@ def check_role(allowed_roles: List[str]):
 
 def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
 
+    print (request.url.path)
     print (token)
 
     decoded = jwt.decode(token, options={'verify_signature': False})
