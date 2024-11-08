@@ -105,6 +105,7 @@ def check_role(allowed_roles: List[str]):
         it raises a 403 Forbidden error.
     """
     def role_checker(info: dict = Depends(validate_token)):
+        print ("??????")
         roles = [db["_roles"][role] for role in allowed_roles]
         users = list(set(itertools.chain(*roles)))
         if info["preferred_username"] not in users:
