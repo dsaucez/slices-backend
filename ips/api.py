@@ -116,7 +116,7 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(request: Request, token: str = Security(api_key_header)):
-    logging.info("request.url")
+    print(request.url)
     # List of paths that do not require token validation
     exempt_paths = ["/ns"]
     
