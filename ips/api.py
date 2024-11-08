@@ -115,7 +115,7 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: str = Security(api_key_header)):
+def validate_token(request: Request, token: Optional[str] = Security(api_key_header, auto_error=False)):
     logging.INFO("1234")
 
     decoded = jwt.decode(token, options={'verify_signature': False})
@@ -157,11 +157,7 @@ db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
-def vvalidate_token(request: Request):
-    logging.INFO("coucou")
-    return {}
-
-app = FastAPI(dependencies=[Depends(vvalidate_token)])
+app = FastAPI(dependencies=[Depends(validate_token)])
 # app = FastAPI()
 
 app.add_middleware(
