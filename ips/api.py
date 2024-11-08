@@ -115,7 +115,14 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(token: str = Security(api_key_header)):
+def validate_token(request: Request, token: str = Security(api_key_header)):
+    # List of paths that do not require token validation
+    exempt_paths = ["/ns"]
+    
+    # Skip validation if the path is in the exempt list
+    if request.url.path in exempt_paths:
+        return
+    
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -606,7 +613,7 @@ class AdmissionReviewRequest(BaseModel):
     kind: str
     request: dict
 
-@app.post("/ns", dependencies=[])
+@app.post("/ns")
 async def validate(request: Request):
     body = await request.json()
     admission_request = AdmissionReviewRequest(**body)
