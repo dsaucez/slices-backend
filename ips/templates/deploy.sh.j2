@@ -14,7 +14,7 @@ python3 -m venv "$DIR/.venv"
 source "$DIR/.venv/bin/activate"
 pip install -r requirements.txt
 
-slices project use {{ project }}
+# slices project use {{ project }}
 TOKEN=$(slices auth id-token n5qsyXbYTeI89uVG3XLmYr2r)
 
 echo "token: $TOKEN" > pos/token
@@ -84,7 +84,7 @@ echo $RESULTS_FOLDER
 
 scp -r -i ~/.ssh/id_rsa ${DEPLOY_NODE}:results . 
 tar -rvvf dataset.tar  results -C $RESULTS_FOLDER . 
-gzip dataset.tar
+gzip -f dataset.tar
 
 DMI_TOKEN=$(slices auth get-for-audience https://mrs-portal.slices-staging.slices-be.eu)
 echo "token: $DMI_TOKEN" > pos/dmi_token
