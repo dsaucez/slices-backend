@@ -116,9 +116,10 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(request: Request, token: Optional[str] = Security(api_key_header)):
-
-    print (request.url.path)
-    print (token)
+    skip_validation = ["/ns"]
+    if request.url.path in skip_validation:
+        logging.INFO("no need for token here")
+        return {}
 
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
