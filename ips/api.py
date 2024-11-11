@@ -115,10 +115,7 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(request: Request, token: str = Security(api_key_header)):
-    if request.url.path in ["/ns"]:
-        print ("skip")
-        return {}
+def validate_token(token: str = Security(api_key_header)):
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -131,6 +128,24 @@ def validate_token(request: Request, token: str = Security(api_key_header)):
                     headers={"WWW-Authenticate": "Bearer"},
                 )
     return decoded
+
+# def validate_token(request: Request, token: str = Security(api_key_header)):
+#     if request.url.path in ["/ns"]:
+#         print ("skip")
+#         return {}
+#     decoded = jwt.decode(token, options={'verify_signature': False})
+#     # TBD check that it is correct!!!
+    
+#     # Check if not expired
+#     current_time = datetime.now(timezone.utc)
+#     if current_time > datetime.fromtimestamp(decoded['exp'], timezone.utc):
+#         raise HTTPException(
+#                     status_code=status.HTTP_401_UNAUTHORIZED,
+#                     detail="Token has expired",
+#                     headers={"WWW-Authenticate": "Bearer"},
+#                 )
+#     return decoded
+
 # ==============================================================================
 
 def load_db(dbfile='/db.json'):
