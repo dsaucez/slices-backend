@@ -604,6 +604,6 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 from fastapi import Request
 
 @app.post("/ns")
-async def post_ns(request: Request):
+async def post_ns(request: Request, dep: str = Depends(lambda: None)):
     body = await request.json()
     print (body)
