@@ -45,7 +45,7 @@ origins = [
 
 # == API KEY ===================================================================
 import jwt
-api_key_header = APIKeyHeader(name="Bearer")
+api_key_header = APIKeyHeader(name="Bearer", auto_error=False)
 
 def get_s3_bucket():
     credentials = load_db(dbfile="/credentials.json")
@@ -116,6 +116,7 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(token: str = Security(api_key_header)):
+    print ("here")
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -604,6 +605,6 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 from fastapi import Request
 
 @app.post("/ns")
-async def post_ns(request: Request, dep: str = Depends(lambda: None)):
+async def post_ns(request: Request):
     body = await request.json()
     print (body)
