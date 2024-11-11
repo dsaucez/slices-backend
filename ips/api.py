@@ -621,7 +621,7 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 
 
 
-@app.post("/ns")
-async def post_ns(request: Request):
-    body = await request.json()
-    print (body)
+# @app.post("/ns")
+# async def post_ns(request: Request):
+#     body = await request.json()
+#     print (body)
