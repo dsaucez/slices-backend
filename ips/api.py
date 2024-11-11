@@ -1,6 +1,6 @@
 from enum import Enum
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Security, status, Response
+from fastapi import FastAPI, HTTPException, Depends, Security, status, Response, Request
 from fastapi.security import APIKeyHeader
 import logging
 from uvicorn.config import LOGGING_CONFIG
@@ -115,8 +115,8 @@ def check_role(allowed_roles: List[str]):
         return info
     return role_checker
 
-def validate_token(token: str = Security(api_key_header)):
-    print ("here")
+def validate_token(request: Request, token: str = Security(api_key_header)):
+    print (request.url)
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -602,7 +602,7 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
     return StreamingResponse(string_streamer(yaml.dump(config)), media_type="application/x-yaml")
 
 
-from fastapi import Request
+
 
 @app.post("/ns")
 async def post_ns(request: Request):
