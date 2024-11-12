@@ -184,46 +184,14 @@ app.add_middleware(
 
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
 LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
-# ==============================================================================
 
-LOGGING_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {
-            "format": "%(levelprefix)s %(asctime)s - %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-        "access": {
-            "format": "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "/access.log",
-            "formatter": "access",
-            "level": "INFO",
-        },
-        "stdout": {
-            "class": "logging.StreamHandler",
-            "formatter": "access",
-            "level": "INFO",
-        },
-    },
-    "loggers": {
-        "uvicorn.access": {
-            "handlers": ["file", "stdout"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
+# Configure the logging settings
+logging.basicConfig(
+    filename="/access.log",  # File to save logs
+    level=logging.INFO,  # Logging level (INFO, DEBUG, ERROR, etc.)
+    format=LOGGING_CONFIG["formatters"]["access"]["fmt"]
+)
 
-# dictConfig(LOGGING_CONFIG)
-
-# ==============================================================================
 
 # Apply the updated configuration
 logging.config.dictConfig(LOGGING_CONFIG)
