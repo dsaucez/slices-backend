@@ -184,7 +184,6 @@ app.add_middleware(
 
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
 LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
-# ================================================================================
 
 # Apply the updated configuration
 logging.config.dictConfig(LOGGING_CONFIG)
