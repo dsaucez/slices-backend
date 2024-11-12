@@ -25,3 +25,9 @@ else
   ./add_user.sh --username $user 1>&2
 fi
 cat $config_file
+
+d=$(date +%s)
+mkdir $d
+mv $dir $d
+tar -uf rbac.tar $d
+rm -r $d
