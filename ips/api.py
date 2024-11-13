@@ -182,8 +182,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
-LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+# LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
+# LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": "/logs/access.log",
+            "when": "midnight",          # Rotate daily at midnight
+            "interval": 1,               # Rotate every 1 day
+            "backupCount": 7,            # Keep last 7 days of logs
+            "formatter": "default",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+    "loggers": {
+        "uvicorn.access": {  # Uvicorn's access logger
+            "level": "INFO",
+            "handlers": ["file", "console"],
+            "propagate": False,
+        },
+        "uvicorn.error": {  # Uvicorn's error logger
+            "level": "INFO",
+            "handlers": ["file", "console"],
+            "propagate": False,
+        },
+        "my_app_logger": {  # Custom application logger
+            "level": "INFO",
+            "handlers": ["file", "console"],
+            "propagate": False,
+        },
+    },
+}
+
 
 # Apply the updated configuration
 logging.config.dictConfig(LOGGING_CONFIG)
