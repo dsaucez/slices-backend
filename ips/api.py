@@ -116,6 +116,8 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(token: str = Security(api_key_header)):
+    print ("============")
+    print ("============")
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -128,9 +130,6 @@ def validate_token(token: str = Security(api_key_header)):
                     headers={"WWW-Authenticate": "Bearer"},
                 )
     
-    print ("============")
-    print(decoded)
-    print ("============")
     return decoded
 
 # def validate_token(request: Request, token: str = Security(api_key_header)):
