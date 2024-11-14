@@ -23,6 +23,7 @@ import uuid
 import paramiko
 import os
 import yaml
+import re
 
 import pos
 
@@ -309,16 +310,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     # Generate an ID
     id=data.experiment_id
 
-    logger = logging.getLogger("uvicorn.access")
-
-    import re
-    match = re.search(r'_(\w+)$', id)
-    if match:
-        extracted_string = match.group(1)
-        logger.info(extracted_string)
-
     # Prefix the namespaces to belong to the user
-    nsprefix=user['preferred_username']
+    match = re.search(r'_(\w+)$', id)
+    nsprefix=match.group(1)  #user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
         data.params_5g['GCN']['core']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['core']['namespace'])
 
