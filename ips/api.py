@@ -312,7 +312,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 
     # Prefix the namespaces to belong to the user
     match = re.search(r'_(\w+)$', id)
-    nsprefix=match.group(1)  #user['preferred_username']
+    xid=match.group(1)
+    xuser=user['preferred_username']
+    nsprefix=f"{xid}-{xuser}"
     if "namespace" in data.params_5g['GCN']['core']:
         data.params_5g['GCN']['core']['namespace'] = "{}-{}".format(nsprefix, data.params_5g['GCN']['core']['namespace'])
 
