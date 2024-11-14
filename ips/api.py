@@ -310,7 +310,13 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     id=data.experiment_id
 
     logger = logging.getLogger("uvicorn.access")
-    logger.info(id)
+
+    import re
+    match = re.search(r'_(\w+)$', id)
+    if match:
+        extracted_string = match.group(1)
+        logger.info(extracted_string)
+
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
