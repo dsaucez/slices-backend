@@ -666,4 +666,4 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 # @app.post("/ns")
 # async def post_ns(request: Request):
 #     body = await request.json()
-#     print (body)
+#     print (body)root@post5g-backend:~# 
