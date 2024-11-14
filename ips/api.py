@@ -117,8 +117,6 @@ def check_role(allowed_roles: List[str]):
 
 def validate_token(token: str = Security(api_key_header)):
     logger = logging.getLogger("uvicorn.access")
-
-    logger.info("ICI")
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -130,7 +128,8 @@ def validate_token(token: str = Security(api_key_header)):
                     detail="Token has expired",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
-    
+    logger.info(token)
+    logger.info(decoded)
     return decoded
 
 # def validate_token(request: Request, token: str = Security(api_key_header)):
