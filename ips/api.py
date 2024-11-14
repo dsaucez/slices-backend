@@ -128,7 +128,9 @@ def validate_token(token: str = Security(api_key_header)):
                     headers={"WWW-Authenticate": "Bearer"},
                 )
     
-    logging.info(decoded)
+    print ("============")
+    print(decoded)
+    print ("============")
     return decoded
 
 # def validate_token(request: Request, token: str = Security(api_key_header)):
