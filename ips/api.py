@@ -127,6 +127,8 @@ def validate_token(token: str = Security(api_key_header)):
                     detail="Token has expired",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
+    
+    print (decoded)
     return decoded
 
 # def validate_token(request: Request, token: str = Security(api_key_header)):
