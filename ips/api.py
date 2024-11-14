@@ -116,7 +116,6 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(token: str = Security(api_key_header)):
-    logger = logging.getLogger("uvicorn.access")
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
@@ -128,8 +127,6 @@ def validate_token(token: str = Security(api_key_header)):
                     detail="Token has expired",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
-    logger.info(token)
-    logger.info(decoded)
     return decoded
 
 # def validate_token(request: Request, token: str = Security(api_key_header)):
@@ -312,6 +309,8 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
     # Generate an ID
     id=data.experiment_id
 
+    logger = logging.getLogger("uvicorn.access")
+    logger.info(id)
     # Prefix the namespaces to belong to the user
     nsprefix=user['preferred_username']
     if "namespace" in data.params_5g['GCN']['core']:
