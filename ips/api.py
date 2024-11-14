@@ -116,9 +116,6 @@ def check_role(allowed_roles: List[str]):
     return role_checker
 
 def validate_token(token: str = Security(api_key_header)):
-    print ("============")
-    dsf
-    print ("============")
     decoded = jwt.decode(token, options={'verify_signature': False})
     # TBD check that it is correct!!!
     
