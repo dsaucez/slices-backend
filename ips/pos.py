@@ -62,7 +62,7 @@ def generate_variables(data: PosScriptData, user: dict, id: str):
 
   match = re.search(r'_(\w+)$', data.experiment_id)
   xp_id=match.group(1)
-  _variables = template.render({ "xp_id": id })
+  _variables = template.render({ "xp_id": xp_id })
   
   return _variables
 
