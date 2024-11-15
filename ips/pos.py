@@ -59,13 +59,12 @@ def generate_sh5g(data: PosScriptData, user: dict, id: str):
 
 def generate_variables(data: PosScriptData, user: dict, id: str):
   template = env.get_template('5g.sh.j2')
+
+  match = re.search(r'_(\w+)$', data.experiment_id)
+  xp_id=match.group(1)
+  _variables = template.render({ "xp_id": xp_id })
   
-  # id=data.experiment_id
-  # match = re.search(r'_(\w+)$', id)
-  # xp_id=match.group(1)
-  variables = template.render({ "xp_id": id })
-  
-  return variables
+  return _variables
 
 def generate_inventory(data: PosScriptData, user: dict, id: str):
   template = env.get_template('hosts.yaml.j2')
