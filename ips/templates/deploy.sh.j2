@@ -36,6 +36,7 @@ $POS nodes reset $DEPLOY_NODE &
 wait
 
 # 0. Prepare deployment node
+$POS allocations set_variables $DEPLOY_NODE --as-global pos/variables.yaml
 $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p results
