@@ -83,8 +83,14 @@ ARTIFACT_SIZE=$(( $RESULTS_SIZE + $POS_SIZE ))
 echo $ARTIFACT_SIZE
 echo $RESULTS_FOLDER
 
-scp -r -i ~/.ssh/id_rsa ${DEPLOY_NODE}:results . 
-tar -rvvf dataset.tar  results -C $RESULTS_FOLDER . 
+cat <<EOF | $POS command launch $DEPLOY_NODE -i -
+#!/usr/bin/bash
+pos_upload -r results
+EOF
+
+#scp -r -i ~/.ssh/id_rsa ${DEPLOY_NODE}:results . 
+#tar -rvvf dataset.tar  results -C $RESULTS_FOLDER . 
+tar -rvvf dataset.tar -C $RESULTS_FOLDER . 
 gzip -f dataset.tar
 
 DMI_TOKEN=$(slices auth get-for-audience https://mrs-portal.slices-staging.slices-be.eu)
