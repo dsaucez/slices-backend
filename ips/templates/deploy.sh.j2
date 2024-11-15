@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 tar -cvvf dataset.tar ../reference_implementation-develop                       # snapshot is the very first thing to do!
 XP={{ name }}
+XP_ID={{ xp_id }}
 
 KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 KUBECONFIG=~/RBAC/{{ k8s_user }}/config-{{ k8s_user }}

@@ -43,10 +43,15 @@ template_dir = 'templates'
 env = Environment(loader=FileSystemLoader(template_dir))
 env.filters.update({'to_yaml': to_yaml})
 
-
+import re
 def generate_script(data: PosScriptData, user: dict, id: str):
-  template = env.get_template('deploy.sh.j2')  
-  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] })
+  template = env.get_template('deploy.sh.j2')
+
+  id=data.experiment_id
+  match = re.search(r'_(\w+)$', id)
+  xp_id=match.group(1)
+  
+  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] | {"xp_id": xp_id}})
   
   return script
 
