@@ -51,7 +51,7 @@ def generate_script(data: PosScriptData, user: dict, id: str):
   match = re.search(r'_(\w+)$', id)
   xp_id=match.group(1)
   
-  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] | {"xp_id": xp_id}})
+  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name']} | {"xp_id": xp_id})
   
   return script
 
