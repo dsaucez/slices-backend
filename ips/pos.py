@@ -47,11 +47,7 @@ import re
 def generate_script(data: PosScriptData, user: dict, id: str):
   template = env.get_template('deploy.sh.j2')
 
-  id=data.experiment_id
-  match = re.search(r'_(\w+)$', id)
-  xp_id=match.group(1)
-  
-  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name']} | {"xp_id": xp_id})
+  script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name']})
   
   return script
 
@@ -60,6 +56,16 @@ def generate_sh5g(data: PosScriptData, user: dict, id: str):
   script = template.render(dict(data) | { "k8s_user": user["preferred_username"] } | { "project": user['proj_name'] })
   
   return script
+
+def generate_variables(data: PosScriptData, user: dict, id: str):
+  template = env.get_template('5g.sh.j2')
+  
+  # id=data.experiment_id
+  # match = re.search(r'_(\w+)$', id)
+  # xp_id=match.group(1)
+  variables = template.render({ "xp_id": id })
+  
+  return variables
 
 def generate_inventory(data: PosScriptData, user: dict, id: str):
   template = env.get_template('hosts.yaml.j2')

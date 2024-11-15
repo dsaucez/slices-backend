@@ -341,6 +341,9 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 
     sh_5g = pos.generate_sh5g(data=data, user=user, id=id)
 
+    # generate variables
+    variables = pos.generate_variables(data=data, user=user, id=id)
+
     # generate params parameters
     params = pos.generate_params(data=data, user=user, id=id)
     
@@ -377,6 +380,7 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
         zip_file.writestr("pos/params.5g.yaml", params5g)
         zip_file.writestr("pos/params_dmi.yaml", dmi)
         zip_file.writestr("pos/hosts", inventory)
+        zip_file.writestr("pos/variables.yaml", variables)
 
         zip_file.writestr("pos/get_xp.sh", xp)
         zip_info = zip_file.getinfo("pos/get_xp.sh")
