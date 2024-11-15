@@ -31,12 +31,12 @@ $POS allocations free -k $DEPLOY_NODE
 $POS allocations allocate --result-folder "$XP" $DEPLOY_NODE
 $POS nodes image $DEPLOY_NODE $IMAGE
 
+$POS allocations set_variables $DEPLOY_NODE --as-global pos/variables.yaml
 $POS nodes reset $DEPLOY_NODE &
 
 wait
 
 # 0. Prepare deployment node
-$POS allocations set_variables $DEPLOY_NODE --as-global pos/variables.yaml
 $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p results
