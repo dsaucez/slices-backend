@@ -58,11 +58,11 @@ def generate_sh5g(data: PosScriptData, user: dict, id: str):
   return script
 
 def generate_variables(data: PosScriptData, user: dict, id: str):
-  template = env.get_template('5g.sh.j2')
+  template = env.get_template('variables.yaml.j2')
 
   match = re.search(r'_(\w+)$', data.experiment_id)
   xp_id=match.group(1)
-  _variables = template.render({ "xp_id": xp_id })
+  _variables = template.render({ "xp_id": id })
   
   return _variables
 
