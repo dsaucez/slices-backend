@@ -736,4 +736,8 @@ async def post_cleanup(request_body: TokenRequest, user: dict = Depends(validate
     nsprefix=f"{xid}-{xuser}"
 
 
-    return {"proj": proj, "exp": exp, "nsprefix": nsprefix}
+    cmd = "cd namespaces; ./delete_nsprefix.sh {}".format(nsprefix)
+    output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+    # config = yaml.safe_load(output)
+
+    return {"proj": proj, "exp": exp, "nsprefix": nsprefix, "output": output}
