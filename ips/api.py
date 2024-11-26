@@ -170,6 +170,10 @@ def load_db(dbfile='/db.json'):
         loaded_db = json.load(json_file)
     return loaded_db
 
+def save_db(dbfile='/db.json'):
+    with open(dbfile, "w") as file:
+        json.dump(db, file, indent=4)
+
 db = load_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
@@ -231,6 +235,22 @@ LOGGING_CONFIG = {
 # Apply the updated configuration
 logging.config.dictConfig(LOGGING_CONFIG)
 
+
+
+@app.middleware("http")
+async def add_process_after_request(request: Request, call_next):
+    # Process the request (before sending to the endpoint)
+    response = await call_next(request)
+    # Logic to execute after the response is processed
+    await process_after_request()
+    return response
+
+async def process_after_request():
+    print("save db after each API call")
+    save_db()
+
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Code to run on startup
@@ -241,8 +261,7 @@ async def lifespan(app: FastAPI):
     await shutdown_method()  # Replace with your specific shutdown method
 
 async def shutdown_method():
-    with open("/db.json", "w") as file:
-        json.dump(db, file, indent=4)
+    save_db(dbfile="/db.json")
 
 app.router.lifespan_context = lifespan
 
