@@ -244,7 +244,7 @@ async def add_process_after_request(request: Request, call_next):
     # Process the request (before sending to the endpoint)
     response = await call_next(request)
     # Logic to execute after the response is processed
-    logger.info(request.url)
+    logger.info(request.url.path)
     await process_after_request()
     return response
 
