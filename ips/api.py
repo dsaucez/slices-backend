@@ -246,7 +246,6 @@ async def add_process_after_request(request: Request, call_next):
     return response
 
 async def process_after_request():
-    dsf
     print("save db after each API call")
     save_db()
 
