@@ -715,9 +715,10 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 
 
 
-@app.get("/cleanup/")
-async def get_cleanup(data: pos.PosScriptData, user: dict = Depends(validate_token)):
+@app.post("/cleanup/")
+async def post_cleanup(data: pos.PosScriptData, user: dict = Depends(validate_token)):
     # Generate an ID
+    logger.info(data)
     id=data.experiment_id
 
     # Prefix the namespaces to belong to the user
