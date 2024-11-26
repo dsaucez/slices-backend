@@ -223,7 +223,7 @@ LOGGING_CONFIG = {
             "handlers": ["file", "console"],
             "propagate": False,
         },
-        "my_app_logger": {  # Custom application logger
+        "slices-backend": {  # Custom application logger
             "level": "INFO",
             "handlers": ["file", "console"],
             "propagate": False,
@@ -246,7 +246,8 @@ async def add_process_after_request(request: Request, call_next):
     return response
 
 async def process_after_request():
-    print("save db after each API call")
+    logger = logging.getLogger("slices-backend")
+    logger.info("save db after each API call")
     save_db()
 
 
