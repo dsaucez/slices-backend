@@ -729,4 +729,11 @@ async def post_cleanup(request_body: TokenRequest, user: dict = Depends(validate
         raise HTTPException(status_code=401, detail="Invalid experiment token")
     
 
-    return {"proj": proj, "exp": exp}
+    # Prefix the namespaces to belong to the user
+    match = re.search(r'_(\w+)$', exp)
+    xid=match.group(1)
+    xuser=user['preferred_username']
+    nsprefix=f"{xid}-{xuser}"
+
+
+    return {"proj": proj, "exp": exp, "nsprefix": nsprefix}
