@@ -712,3 +712,17 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 # async def post_ns(request: Request):
 #     body = await request.json()
 #     print (body)root@post5g-backend:~# 
+
+
+
+@app.get("/cleanup/")
+async def get_cleanup(data: pos.PosScriptData, user: dict = Depends(validate_token)):
+    # Generate an ID
+    id=data.experiment_id
+
+    # Prefix the namespaces to belong to the user
+    match = re.search(r'_(\w+)$', id)
+    xid=match.group(1)
+    xuser=user['preferred_username']
+
+    return {'xid':xid, 'xuser': xuser}
