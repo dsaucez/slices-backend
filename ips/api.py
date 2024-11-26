@@ -716,16 +716,17 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
 
 
 @app.post("/cleanup/")
-async def post_cleanup(data: dict, user: dict = Depends(validate_token)):
-    # Generate an ID
-    logger.info(data)
-    # id=data.experiment_id
+async def post_cleanup(request_body: TokenRequest, user: dict = Depends(validate_token)):
+    proj = user['proj']
 
-    # # Prefix the namespaces to belong to the user
-    # match = re.search(r'_(\w+)$', id)
-    # xid=match.group(1)
-    # xuser=user['preferred_username']
+    token = request_body.token
+    try:
+        data = validate_token(token)
+        exp = data['sub']
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Experiment token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid experiment token")
+    
 
-    # return {'xid':xid, 'xuser': xuser}
-
-    return {"data": data}
+    return {"proj": proj, "exp": exp}
