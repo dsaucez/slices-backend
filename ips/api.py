@@ -213,12 +213,12 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "slices-backend.access": {  # Uvicorn's access logger
+        "uvicorn.access": {  # Uvicorn's access logger
             "level": "INFO",
             "handlers": ["file", "console"],
             "propagate": False,
         },
-        "slices-backend.error": {  # Uvicorn's error logger
+        "uvicorn.error": {  # Uvicorn's error logger
             "level": "INFO",
             "handlers": ["file", "console"],
             "propagate": False,
@@ -236,7 +236,7 @@ LOGGING_CONFIG = {
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
-logger = logging.getLogger("slices-backend.logs")
+logger = logging.getLogger("slices-backend")
 
 
 @app.middleware("http")
