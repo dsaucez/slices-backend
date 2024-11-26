@@ -236,18 +236,19 @@ LOGGING_CONFIG = {
 logging.config.dictConfig(LOGGING_CONFIG)
 
 
+logger = logging.getLogger("slices-backend")
+
 
 @app.middleware("http")
 async def add_process_after_request(request: Request, call_next):
     # Process the request (before sending to the endpoint)
     response = await call_next(request)
     # Logic to execute after the response is processed
+    logger.info(request.base_url)
     await process_after_request()
     return response
 
 async def process_after_request():
-    logger = logging.getLogger("slices-backend")
-    logger.info("save db after each API call")
     save_db()
 
 
