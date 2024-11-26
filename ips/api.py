@@ -187,9 +187,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(client_addr)s - %(request_line)s - %(status_code)s"
-# LOGGING_CONFIG["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
-
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -235,22 +232,41 @@ LOGGING_CONFIG = {
 # Apply the updated configuration
 logging.config.dictConfig(LOGGING_CONFIG)
 
-
 logger = logging.getLogger("slices-backend")
 
+async def _process_after_request(request: Request):
+    """
+    Executes a list of post-processing logic.
+
+    Args:
+        request (Request): The incoming HTTP request object, which provides access to details such as 
+            headers, query parameters, and body.
+    """
+    save_db()
 
 @app.middleware("http")
 async def add_process_after_request(request: Request, call_next):
-    # Process the request (before sending to the endpoint)
+    """
+    Middleware to execute custom post-processing logic after the endpoint has been called.
+
+    This function is applied as an HTTP middleware. After every request executes
+    the `process_after_request` additional logic after the endpoint processing
+    is complete.
+
+    Args:
+        request (Request): The incoming HTTP request object, which provides access to details such as 
+            headers, query parameters, and body.
+        call_next (Callable): A callable that forwards the request to the next handler in the middleware
+            stack, eventually reaching the endpoint.
+
+    Returns:
+        Response: The final HTTP response object after the request has been processed by the endpoint
+            and any additional logic in this middleware.
+    """
     response = await call_next(request)
-    # Logic to execute after the response is processed
-    logger.info(request.url.path)
-    await process_after_request()
+
+    await _process_after_request(request=request)
     return response
-
-async def process_after_request():
-    save_db()
-
 
 
 @asynccontextmanager
@@ -263,7 +279,7 @@ async def lifespan(app: FastAPI):
     await shutdown_method()  # Replace with your specific shutdown method
 
 async def shutdown_method():
-    save_db(dbfile="/db.json")
+    save_db()
 
 app.router.lifespan_context = lifespan
 
