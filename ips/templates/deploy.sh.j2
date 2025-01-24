@@ -40,6 +40,7 @@ wait
 $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p results
+$POS commands launch $DEPLOY_NODE -- mkdir -p results/README.md
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
 cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
