@@ -6,7 +6,7 @@ KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 KUBECONFIG=~/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 KUBECONFIG=~/kubeconfig-pos
 
-RESOURCES={{ resources }}
+RESOURCES=({% for item in resources %} "{{ item }}" {% endfor %})
 DIR=$(dirname $(realpath "$0"))
 RESULTS_DIR=/srv/testbed/results/
 
