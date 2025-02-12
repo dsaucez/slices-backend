@@ -346,6 +346,7 @@ async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(validate
 # async def post_pos_script(data: pos.PosScriptData, user: dict = Depends(check_role(["user"]))):
     # Generate an ID
     id=data.experiment_id
+    print (data)
 
     # Prefix the namespaces to belong to the user
     match = re.search(r'_(\w+)$', id)
