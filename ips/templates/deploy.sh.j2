@@ -46,23 +46,15 @@ $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p results
 $POS commands launch $DEPLOY_NODE -- touch results/README.md
 
-# if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
-# cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
-# cp ~/.ssh/id_rsa ~/id_rsa_pos
-
 pos command launch ${DEPLOY_NODE} -- ssh-keygen -t rsa -b 4096 -N "" -f id_rsa_pos 
 scp ${DEPLOY_NODE}:id_rsa_pos.pub .
 
-# $POS nodes copy --dest id_rsa_pos.pub $DEPLOY_NODE ~/id_rsa_pos.pub
-# $POS nodes copy --dest id_rsa_pos $DEPLOY_NODE ~/id_rsa_pos
-
-# cat <<EOF | pos command launch $DEPLOY_NODE -i -
-# #!/usr/bin/bash
-# cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
-# EOF
-
 for node in "${NODES[@]}"; do
-  ssh-copy-id -i id_rsa_pos.pub -f root@$node
+$POS nodes copy --dest id_rsa_pos.pub $node id_rsa_pos.pub
+cat <<EOF | pos command launch $node -i -
+#!/usr/bin/bash
+cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
+EOF
 done
 
 ## secret files
@@ -78,6 +70,11 @@ $POS nodes copy --dest pos/params.yaml $DEPLOY_NODE  pos/params.yaml
 $POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 $POS nodes copy --dest pos/params_dmi.yaml $DEPLOY_NODE  pos/params_dmi.yaml
 $POS nodes copy --recursive --dest pos/oai-cn5g-fed-custom $DEPLOY_NODE  oai-cn5g-fed 
+
+cat <<EOF | $POS command launch $DEPLOY_NODE -i -
+#!/usr/bin/bash
+cat pos/etc_hosts >> /etc/hosts
+EOF
 
 ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
