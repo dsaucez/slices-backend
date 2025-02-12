@@ -48,21 +48,25 @@ $POS commands launch $DEPLOY_NODE -- touch results/README.md
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
 cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
+cp ~/.ssh/id_rsa ~/id_rsa_pos
 
 $POS nodes copy --dest id_rsa_pos.pub $DEPLOY_NODE ~/id_rsa_pos.pub
+$POS nodes copy --dest id_rsa_pos $DEPLOY_NODE ~/id_rsa_pos
 
-cat <<EOF | pos command launch $DEPLOY_NODE -i -
-#!/usr/bin/bash
-cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
-EOF
+# cat <<EOF | pos command launch $DEPLOY_NODE -i -
+# #!/usr/bin/bash
+# cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
+# EOF
 
-ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
+for node in "${NODES[@]}"; do
+  ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$node
+done
 
 ## secret files
 $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
 
 # experiment files
-$POS nodes copy --dest pos/hostfiles $DEPLOY_NODE  /etc/hosts
+$POS nodes copy --dest pos/etc_hosts $DEPLOY_NODE  /etc/hosts
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
 $POS nodes copy --dest pos/get_xp.sh $DEPLOY_NODE  pos/get_xp.sh
 $POS nodes copy --dest pos/5g.sh $DEPLOY_NODE  pos/5g.sh
