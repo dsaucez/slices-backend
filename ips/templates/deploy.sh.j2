@@ -6,7 +6,6 @@ KUBECONFIG=$(pwd)/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 KUBECONFIG=~/RBAC/{{ k8s_user }}/config-{{ k8s_user }}
 KUBECONFIG=~/kubeconfig-pos
 
-RESOURCES=({% for item in resources %} "{{ item }}" {% endfor %})
 DIR=$(dirname $(realpath "$0"))
 RESULTS_DIR=/srv/testbed/results/
 
@@ -27,36 +26,43 @@ IMAGE="ubuntu-jammy"
 POS=pos
 
 DEPLOY_NODE={{ deploy_node }}
+RESOURCES=({% for item in resources %} "{{ item }}" {% endfor %})
 
-$POS allocations free -k $DEPLOY_NODE
-$POS allocations allocate --result-folder "$XP" $DEPLOY_NODE
-$POS nodes image $DEPLOY_NODE $IMAGE
+NODES=("${RESOURCES[@]}" "$DEPLOY_NODE")
 
-$POS allocations set_variables $DEPLOY_NODE --as-global pos/variables.yaml
-$POS nodes reset $DEPLOY_NODE &
+for node in "${NODES[@]}"; do
+  $POS allocations free -k $node
+  $POS allocations allocate --result-folder "$XP" $node
+  $POS nodes image $node $IMAGE
 
+  $POS allocations set_variables $node --as-global pos/variables.yaml
+  $POS nodes reset $node &
+done
 wait
 
 # 0. Prepare deployment node
 $POS commands launch $DEPLOY_NODE -- mkdir -p pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p .pos
 $POS commands launch $DEPLOY_NODE -- mkdir -p results
-$POS commands launch $DEPLOY_NODE -- mkdir -p results/README.md
+$POS commands launch $DEPLOY_NODE -- touch results/README.md
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa; fi
 cp ~/.ssh/id_rsa.pub ~/id_rsa_pos.pub
+
 $POS nodes copy --dest id_rsa_pos.pub $DEPLOY_NODE ~/id_rsa_pos.pub
+
 cat <<EOF | pos command launch $DEPLOY_NODE -i -
 #!/usr/bin/bash
 cat id_rsa_pos.pub >> ~/.ssh/authorized_keys
 EOF
 
-#ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
+ssh-copy-id -i ~/.ssh/id_rsa.pub -f root@$DEPLOY_NODE
 
 ## secret files
 $POS nodes copy --dest .pos/token $DEPLOY_NODE  pos/token
 
 # experiment files
+$POS nodes copy --dest pos/hostfiles $DEPLOY_NODE  /etc/hosts
 $POS nodes copy --dest pos/hosts $DEPLOY_NODE  pos/hosts
 $POS nodes copy --dest pos/get_xp.sh $DEPLOY_NODE  pos/get_xp.sh
 $POS nodes copy --dest pos/5g.sh $DEPLOY_NODE  pos/5g.sh
