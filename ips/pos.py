@@ -11,6 +11,7 @@ class PosScriptData(BaseModel):
     name: str
     description: str
     deploy_node: str
+    resources: Optional[list]
     xp_url: str
     params_5g: dict
     scientificDomains: Optional[list] = ['network']
