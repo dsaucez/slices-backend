@@ -71,11 +71,6 @@ $POS nodes copy --dest pos/params.5g.yaml $DEPLOY_NODE  pos/params.5g.yaml
 $POS nodes copy --dest pos/params_dmi.yaml $DEPLOY_NODE  pos/params_dmi.yaml
 $POS nodes copy --recursive --dest pos/oai-cn5g-fed-custom $DEPLOY_NODE  oai-cn5g-fed 
 
-cat <<EOF | $POS command launch $DEPLOY_NODE -i -
-#!/usr/bin/bash
-cat pos/etc_hosts >> /etc/hosts
-EOF
-
 ANSIBLE_ROLES_PATH=roles ansible-playbook --extra-vars "@pos/params.yaml" --extra-vars "_kube_config_local_path=$KUBECONFIG" -i pos/hosts pos/provision.yaml
 
 # Deploy the 5G network
