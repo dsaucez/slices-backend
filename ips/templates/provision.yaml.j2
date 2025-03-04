@@ -57,12 +57,12 @@
       - openvpn
       - python3.10-venv
 
-    - name: Install package (Python)
-      ansible.builtin.pip:
-        name: "{{item}}"
-      with_items:
-      - docker==7.1.0
-      - kubernetes==30.1.0
+  - name: Install package (Python)
+    ansible.builtin.pip:
+      name: "{{item}}"
+    with_items:
+    - docker==7.1.0
+    - kubernetes==30.1.0
 
   - name: Install helm (1/2)
     ansible.builtin.get_url:
