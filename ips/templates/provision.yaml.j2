@@ -1,4 +1,5 @@
 ---
+{% raw %}
 - name: Provision deployment node
   hosts: deploy
   become: true
@@ -6,8 +7,6 @@
     _k8s_version: "1.32"
     
   tasks:
-
-{% raw %}
   - name: Remove existing GPG key file to ensure it can be updated
     ansible.builtin.file:
       path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -93,5 +92,4 @@
     ansible.builtin.copy:
       src: '{{ _kube_config_local_path }}'
       dest: ~/.kube/config
-  when: _kube_config_local_path | default(false)
 {% endraw %}
