@@ -2,12 +2,12 @@
 - name: Provision deployment node
   hosts: deploy
   become: true
-
+  vars:
+    _k8s_version: "1.32"
+    
   tasks:
-  - name: Set parameters
-    ansible.builtin.set_fact:
-      _k8s_version: "1.32"
 
+{% raw %}
   - name: Remove existing GPG key file to ensure it can be updated
     ansible.builtin.file:
       path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -27,7 +27,7 @@
       content: |
         deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ _k8s_version }}/deb/ /
       dest: /etc/apt/sources.list.d/kubernetes.list
-
+{% endraw %}
 
   - name: Update apt cache
     apt:
@@ -44,6 +44,26 @@
       - docker-doc
       - kubectl
       - kubeadm
+      - git
+      - conntrack
+      - python3-pip
+      - python3-venv
+      - curl
+      - apt-transport-https
+      - ca-certificates
+      - lsb-release
+      - patch
+      - wget
+      - openssl
+      - openvpn
+      - python3.10-venv
+
+    - name: Install package (Python)
+      ansible.builtin.pip:
+        name: "{{item}}"
+      with_items:
+      - docker==7.1.0
+      - kubernetes==30.1.0
 
   - name: Install helm (1/2)
     ansible.builtin.get_url:
@@ -64,3 +84,16 @@
     ansible.builtin.shell: python3 -m venv ".venv" && . .venv/bin/activate && pip install -r requirements.txt && python3 -m pip install ansible-core==2.17.2 kubernetes==31.0.0 && ansible-galaxy install -r collections/requirements.yml
     args:
       chdir: reference_implementation
+
+{% raw %}
+  - name: Create ~/.kube
+    ansible.builtin.file:
+      path: "{{ ansible_env.HOME }}/.kube/"
+      state: directory
+
+  - name: Copy custom Kube config
+    ansible.builtin.copy:
+      src: '{{ _kube_config_local_path }}'
+      dest: ~/.kube/config
+  when: _kube_config_local_path | default(false)
+{% endraw %}
