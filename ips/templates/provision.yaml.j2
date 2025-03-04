@@ -1,18 +1,57 @@
 ---
 - name: Provision deployment node
   hosts: deploy
-
-  roles:
-  - role: common
-  - role: docker
-  - role: k8s/base
+  become: true
 
   tasks:
-  # - name: Copy private key
-  #   ansible.builtin.copy:
-  #     src: keys/id_rsa
-  #     dest: .ssh/id_rsa
-  #     mode: '0400'
+  - name: Set parameters
+    ansible.builtin.set_fact:
+      _k8s_version: "1.32"
+
+  - name: Remove existing GPG key file to ensure it can be updated
+    ansible.builtin.file:
+      path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      state: absent
+
+  - name: Download Kubernetes GPG key and place it in /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    become: yes
+    ansible.builtin.shell:
+      cmd: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ _k8s_version }}/deb/Release.key | gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      executable: /bin/bash
+    args:
+      creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+  - name: Create /etc/apt/sources.list.d/kubernetes.list file
+    copy:
+      content: |
+        deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ _k8s_version }}/deb/ /
+      dest: /etc/apt/sources.list.d/kubernetes.list
+
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+
+  - name: Install multiple Docker packages
+    apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - docker.io
+      - docker
+      - docker-compose
+      - docker-doc
+      - kubectl
+      - kubeadm
+
+  - name: Install helm (1/2)
+    ansible.builtin.get_url:
+      url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      dest: /tmp/get_helm.sh
+      mode: '0555'
+  - name: Install helm (2/2)
+    ansible.builtin.shell: "/tmp/get_helm.sh"
 
   - name: Retrieve reference implementation
     ansible.builtin.git:
