@@ -5,6 +5,11 @@
   become: true
   vars:
     _k8s_version: "1.32"
+    deb_architecture:
+      "arm": "arm"
+      "aarch64": "arm64"
+      "x86_64": "amd64"
+
     
   tasks:
   - name: Remove existing GPG key file to ensure it can be updated
@@ -27,6 +32,18 @@
         deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ _k8s_version }}/deb/ /
       dest: /etc/apt/sources.list.d/kubernetes.list
 
+  - name: Download Docker key
+    ansible.builtin.get_url:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      dest: /etc/apt/keyrings/docker.asc
+      mode: '0644'
+
+  - name: Add repository into sources list
+    ansible.builtin.apt_repository:
+      repo: "deb [arch={{ [ansible_architecture] | map('extract', deb_architecture) | first }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+      state: present
+      filename: docker
+
   - name: Update apt cache
     apt:
       update_cache: yes
@@ -36,10 +53,12 @@
       name: "{{ item }}"
       state: present
     loop:
-      - docker.io
-      - docker
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
       - docker-compose
-      - docker-doc
+      - docker-compose-plugin
       - kubectl
       - kubeadm
       - git
