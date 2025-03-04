@@ -27,7 +27,6 @@
       content: |
         deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ _k8s_version }}/deb/ /
       dest: /etc/apt/sources.list.d/kubernetes.list
-{% endraw %}
 
   - name: Update apt cache
     apt:
@@ -85,7 +84,6 @@
     args:
       chdir: reference_implementation
 
-{% raw %}
   - name: Create ~/.kube
     ansible.builtin.file:
       path: "{{ ansible_env.HOME }}/.kube/"
