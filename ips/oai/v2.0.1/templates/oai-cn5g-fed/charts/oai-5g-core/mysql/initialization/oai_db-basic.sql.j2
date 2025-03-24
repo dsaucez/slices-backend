@@ -424,7 +424,7 @@ VALUES
   {% if ue.vectorGenerationInHss is not none %}'{{ value }}'{% else %}NULL{% endif %},
   {% if ue.n5gcAuthMethod is not none %}'{{ value }}'{% else %}NULL{% endif %},
   {% if ue.rgAuthenticationInd is not none %}'{{ value }}'{% else %}NULL{% endif %},
-  '{{ ue.supi }}'
+  '{{ ue.ueid }}'
 );
 INSERT INTO `SessionManagementSubscriptionData`
 (
@@ -436,7 +436,7 @@ INSERT INTO `SessionManagementSubscriptionData`
 VALUES
 (
   '{{ ue.ueid }}',
-  '{{ ue.servingPlmnid }}',
+  '{{ ue.ueid[:5] }}',
   '{{ ue.singleNssai }}',
   '{{ ue.dnnConfigurations }}'
 );
