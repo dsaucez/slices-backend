@@ -459,7 +459,7 @@ async def get_pos_script(id: str, user: dict = Depends(validate_token)):
 
 
 ## R2LAB
-r2lab_devices = ["jaguar", "panther", "n300", "n320", "qhat01"]
+r2lab_devices = ["jaguar", "panther", "n300", "n320", "qhat01", "qhat02" "qhat03"]
 R2labDevices = Enum('name', {dev: dev for dev in r2lab_devices})
 
 class StateUpdate(BaseModel):
