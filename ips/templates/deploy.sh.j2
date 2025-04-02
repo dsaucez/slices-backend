@@ -23,6 +23,7 @@ echo "token: $TOKEN" > pos/token
 export LC_ALL="C.UTF-8"
 
 IMAGE="ubuntu-jammy"
+IMAGE="ubuntu-jammy-slices@2025-04-02T01:33:28+00:00"
 POS=pos
 
 DEPLOY_NODE={{ deploy_node }}
@@ -32,8 +33,11 @@ NODES=("${RESOURCES[@]}" "$DEPLOY_NODE")
 
 for node in "${NODES[@]}"; do
   $POS allocations free -k $node
-  $POS allocations allocate --result-folder "$XP" $node
-  $POS nodes image $node $IMAGE
+done
+$POS allocations allocate --result-folder "$XP" ${NODES[@]}
+
+for node in "${NODES[@]}"; do
+  $POS nodes image --staging $node $IMAGE
 
   $POS allocations set_variables $node --as-global pos/variables.yaml
   $POS nodes reset $node &
