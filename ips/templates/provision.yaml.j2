@@ -1,5 +1,5 @@
 ---
-
+{% raw %}
 - name: Provision deployment node
   hosts: deploy
   become: true
@@ -26,3 +26,4 @@
     ansible.builtin.copy:
       src: '{{ _kube_config_local_path }}'
       dest: ~/.kube/config
+{% endraw %}
