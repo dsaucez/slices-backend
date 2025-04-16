@@ -1,0 +1,36 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: slicesViewRole
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['get', 'list', 'watch']
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: slicesCreateRole
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['create']
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: slicesUpdateRole
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['update', 'patch']
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: slicesDeleteRole
+rules:
+  - apiGroups: ['*']
+    resources: ['*']
+    verbs: ['delete', 'deletecollection']

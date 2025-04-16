@@ -698,7 +698,8 @@ async def post_kubeconfig(cluster: Optional[str] = "centralhub", user: dict = De
     """
     if cluster == "centralhub":
         cmd = "cd users; ./add.sh {}".format(user['preferred_username'])
-        output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+        # output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+        output, error = run_ssh_command_with_key("172.28.2.84", 22, "backend", "/id_rsa", cmd)
         config = yaml.safe_load(output)
     else:
         raise HTTPException(status_code=404, detail="The cluster doesn't exist")
@@ -735,7 +736,8 @@ async def post_cleanup(request_body: TokenRequest, user: dict = Depends(validate
     nsprefix=f"{xid}-{xuser}"
 
     cmd = "cd namespaces; ./delete_nsprefix.sh {}".format(nsprefix)
-    output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+    # output, error = run_ssh_command_with_key("172.29.0.11", 22, "backend", "/id_rsa", cmd)
+    output, error = run_ssh_command_with_key("172.28.2.84", 22, "backend", "/id_rsa", cmd)
     # config = yaml.safe_load(output)
 
     return {"output": output}

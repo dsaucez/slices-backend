@@ -5,7 +5,7 @@ usage() {
   echo ""
   echo "Parameters:"
   echo "  --username             : (Required) The username to create in the cluster."
-  echo "  --api-server-endpoint  : (Optional) The API server endpoint, must be in URL format (e.g., https://192.0.2.1:6443). Default is https://172.29.0.10:6443"
+  echo "  --api-server-endpoint  : (Optional) The API server endpoint, must be in URL format (e.g., https://192.0.2.1:6443). Default is https://172.28.2.87:6443"
   echo "  --cluster-name         : (Optional) The name of the cluster you're targeting. Default is centralhub"
   echo "  --duration             : (Optional) The duration of the session in days. Must be a positive integer. Default is 7 days."
   echo ""
@@ -22,7 +22,7 @@ is_integer() {
 # Set default value for duration
 DURATION=7
 CLUSTER_NAME=centralhub
-API_SERVER_ENDPOINT=https://172.29.0.10:6443
+API_SERVER_ENDPOINT=https://172.28.2.87:6443
 
 # Check if the number of arguments is at least 2 (1 mandatory parameters and its value)
 if [ "$#" -lt 2 ]; then
@@ -74,10 +74,6 @@ echo "Cluster Name: $CLUSTER_NAME"
 if [[ -n "$DURATION" ]]; then
   echo "Duration: $DURATION days"
 fi
-
-#USERNAME=pos1
-#API_SERVER_ENDPOINT="https://172.29.7.62:6443"
-#CLUSTER_NAME="centralhub"
 
 GROUP=SLICES-RI
 
