@@ -124,7 +124,7 @@ def render(environment, templatepath, gcn):
   plmn_support_list = plmnSupportList(gcn)
   served_guami_list = servedGuamiList(gcn)
 
-  gcn['multus']['routes'] = [{'dst': '172.24.0.0/13','gw': '172.28.2.66'}]  # XXX: DSA: should not be hardcoded!
+  gcn['multus']['routes'] = [{'dst': '172.24.0.0/13','gw': '172.28.2.81'}]  # XXX: DSA: should not be hardcoded!
 
   content = template.render(
       ues     = ues,
