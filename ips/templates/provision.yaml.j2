@@ -13,7 +13,7 @@
       force: yes
 
   - name: Prepare venv
-    ansible.builtin.shell: pip install -r requirements.txt && ansible-galaxy install -r collections/requirements.yml
+    ansible.builtin.shell: source /venv/bin/activate && pip install -r requirements.txt && ansible-galaxy install -r collections/requirements.yml
     args:
       chdir: reference_implementation
 
