@@ -21,8 +21,8 @@ is_integer() {
 
 # Set default value for duration
 DURATION=7
-CLUSTER_NAME=centralhub
-API_SERVER_ENDPOINT=https://172.28.2.87:6443
+CLUSTER_NAME=sopnode-production
+API_SERVER_ENDPOINT=https://172.28.2.82:6443
 
 # Check if the number of arguments is at least 2 (1 mandatory parameters and its value)
 if [ "$#" -lt 2 ]; then
