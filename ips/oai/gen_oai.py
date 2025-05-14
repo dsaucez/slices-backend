@@ -149,7 +149,8 @@ def build(data: dict, zip_buffer):
   # ==============================================================================
   # load configurations
   #manifest = os.environ['manifest']
-  dir = "oai/v2.0.1/templates"
+  #dir = "oai/v2.0.1/templates"
+  dir = "oai/v2.1.0/templates"
   manifest = f"{dir}/manifest.yaml"
   templates_dir = f"{dir}/oai-cn5g-fed/charts"
 
