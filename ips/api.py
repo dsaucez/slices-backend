@@ -1,6 +1,6 @@
 from enum import Enum
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Depends, Security, status, Response, Request
+from fastapi import FastAPI, HTTPException, Depends, Security, status, Response, Request, Query
 from fastapi.security import APIKeyHeader
 import logging
 from uvicorn.config import LOGGING_CONFIG
