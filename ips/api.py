@@ -549,8 +549,8 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     #     lb = db['metallb']['allocated'][exp]
 
     return {
-        "subnet": p,
-        "lb": lb
+        "subnet": 1,
+        "lb": 2
         }
 
 @app.post("/prefix/")
