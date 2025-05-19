@@ -27,7 +27,7 @@ import re
 
 import pos
 
-from allocations import create_db, get_allocation
+from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable
 
 # ===== CORS 
 from fastapi.middleware.cors import CORSMiddleware
@@ -534,8 +534,13 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
         raise HTTPException(status_code=401, detail="Invalid experiment token")
 
     logger.info(f"should get the prefix for user {user} and its experiment {exp}")
-    allocation = get_allocation(owner=user, experiment_id=exp, duration=120)
-    logger.info(a)
+    try:
+        allocation = get_allocation(owner=user, experiment_id=exp, duration=120)
+        logger.info(a)
+    except NoPrefixAvailable:
+        raise HTTPException(status_code=404, detail="No prefix is available")
+    except NoIPAvailable:
+        raise HTTPException(status_code=404, detail="No LB IP is available")
 
     # if exp not in db['cluster']['allocated'].keys():
     #     try:
