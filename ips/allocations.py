@@ -1,7 +1,9 @@
 import sqlite3
-# import logging
+import logging
 import json
 from datetime import datetime, timedelta
+
+logger = logging.getLogger("slices-backend")
 
 # logger = logging.getLogger(__name__)
 # logger.setLevel(logging.INFO)
