@@ -523,7 +523,9 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     try:
         data = validate_token(token)
         exp = data['sub']
-        print (data)
+        user = data['act']['sub']
+        print (user)
+        print (exp)
         logger.info(data)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Experiment token has expired")
