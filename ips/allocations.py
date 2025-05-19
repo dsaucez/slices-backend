@@ -48,19 +48,24 @@ def create_ips_table(conn):
   ''')
 
 def create_db(db_path='network_data.db'):
-  # Create/connect to SQLite database
-  conn = sqlite3.connect(db_path)
+    # Create/connect to SQLite database
+    conn = sqlite3.connect(db_path)
 
-  create_subnets_table(conn)
-  create_ips_table(conn)
-  create_allocations_table(conn)
+    create_subnets_table(conn)
+    create_ips_table(conn)
+    create_allocations_table(conn)
 
-  # Commit and close connection
-  conn.commit()
-  conn.close()
+    # Commit and close connection
+    conn.commit()
+    conn.close()
 
-  logger.debug("Database and tables created successfully.")
+    logger.debug("Database and tables created successfully.")
 
+    data = load_json_file('pool.json')
+    add_ips(data["ips"])
+    add_subnets(data["subnets"])
+    
+    logger.debug("Tables populated successfully.")
 
 class AllocationError(Exception):
     """Base exception for allocation-related errors."""
@@ -310,9 +315,7 @@ if __name__ == '__main__':
 
   create_db(db_path='network_data.db')
 
-  data = load_json_file('pool.json')
-  add_ips(data["ips"])
-  add_subnets(data["subnets"])
+ 
 
   # remove_old_allocations(duration_minutes=1)
   remove_expired_allocations()
