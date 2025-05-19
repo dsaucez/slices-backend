@@ -27,6 +27,8 @@ import re
 
 import pos
 
+from allocations import create_db
+
 # ===== CORS 
 from fastapi.middleware.cors import CORSMiddleware
 origins = [
@@ -175,6 +177,8 @@ def save_db(dbfile='/db.json'):
         json.dump(db, file, indent=4)
 
 db = load_db()
+
+create_db()
 
 ClusterNames = Enum('name', {cluster: cluster for cluster in db.keys()})
 
@@ -529,8 +533,8 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid experiment token")
 
-    logger.info(f"should get the prefix for user {user} and its experiment {experiment}")
-    
+    logger.info(f"should get the prefix for user {user} and its experiment {exp}")
+
 
     # if exp not in db['cluster']['allocated'].keys():
     #     try:
