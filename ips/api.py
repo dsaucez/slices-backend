@@ -27,7 +27,7 @@ import re
 
 import pos
 
-from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable
+from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable, delete_allocation
 
 # ===== CORS 
 from fastapi.middleware.cors import CORSMiddleware
@@ -533,16 +533,17 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid experiment token")
 
-    logger.info(f"should get the prefix for user {user} and its experiment {exp}")
+    duration = 1
     try:
-        allocation = get_allocation(owner=user, experiment_id=exp, duration=120)
+        allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
     except NoPrefixAvailable:
         raise HTTPException(status_code=404, detail="No prefix is available")
     except NoIPAvailable:
         raise HTTPException(status_code=404, detail="No LB IP is available")
     return {
         "subnet": allocation['prefix'],
-        "lb": allocation['ip']
+        "lb": allocation['ip'],
+        "duration": duration
         }
 
 @app.post("/prefix/")
@@ -696,6 +697,58 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
             "lb": lb
             }
 
+
+@app.delete("/prefixnew/")
+async def delete_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token)):
+    """
+    DELETE /prefix/ endpoint to release the subnet and load balancer (LB) IP
+    allocated to the user's experiment. The released resources are returned to
+    their respective pools. This endpoint accepts a JSON body containing an
+    experiment JWT token (e.g., generated with
+    `slices experiment jwt <experiment name>`).
+
+    Parameters:
+    request_body (TokenRequest): The body of the DELETE request containing the JWT
+                                 experiment token.
+    user (dict): Authenticated user information.
+
+    Returns:
+    dict: A dictionary containing the number of allocations released (key `count`).
+
+    Example Request body example (JSON):
+    ```
+    {
+        "token": "your_jwt_token_here"
+    }
+    ```
+    Example Response:
+    ```
+    {
+        "count": "1"
+    }
+    ```
+
+    Raises:
+    HTTPException: 
+    - 404 if no subnet or LB IP is allocated to the user's project.
+    """
+    proj = user['proj']
+
+    token = request_body.token
+    try:
+        data = validate_token(token)
+        exp = data['sub']
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Experiment token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid experiment token")
+
+    count = delete_allocation(experiment_id=exp)
+
+    if count != 1
+        raise HTTPException(status_code=404, detail="No prefix is allocated to your experiment")
+    
+    return {"count": count}
 
 def string_streamer(data: str):
     """Generator function to yield parts of a string."""

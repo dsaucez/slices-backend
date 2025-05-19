@@ -201,6 +201,8 @@ def delete_allocation(experiment_id, db_path='network_data.db'):
     finally:
         conn.close()
 
+    return cursor.rowcount
+
 def remaining_ips(db_path='network_data.db'):
     """Return the number of IPs that have not been allocated."""
     conn = sqlite3.connect(db_path)
