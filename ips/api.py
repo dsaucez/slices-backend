@@ -27,7 +27,7 @@ import re
 
 import pos
 
-from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable, delete_allocation, remove_expired_allocations
+from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable, delete_allocation, remove_expired_allocations, get_all_allocations
 
 # ===== CORS 
 from fastapi.middleware.cors import CORSMiddleware
@@ -520,6 +520,13 @@ class TokenRequest(BaseModel):
                 "token": "an experiment token, generated with, e.g., `slices experiment jwt <experiment name>`"
             }
         }
+
+@app.get("/prefix/")
+async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
+    remove_expired_allocations()
+
+    return get_all_allocations()
+
 
 @app.post("/prefix/")
 async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token), duration: int = Query(default=120, description="Optional duration in minutes")):

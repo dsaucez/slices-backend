@@ -178,6 +178,28 @@ def allocate_ip_to_subnet(owner, experiment_id, duration=120, db_path='network_d
 
     return (ip, prefix, expiration_time_str)
 
+def get_all_allocations(db_path='network_data.db'):
+    """
+    Retrieve all allocations from the allocation table.
+    
+    Returns:
+        List of tuples: Each tuple contains (ip, prefix, owner, allocation_time, experiment_id, expiration_time)
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT * FROM allocations")
+        allocations = cursor.fetchall()  # Get all rows
+        return allocations
+
+    except sqlite3.Error as e:
+        print(f"Error fetching allocations: {e}")
+        return []
+
+    finally:
+        conn.close()
+
 
 def delete_allocation(experiment_id, db_path='network_data.db'):
     """Delete an allocation entry by experiment_id."""
