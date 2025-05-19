@@ -745,7 +745,7 @@ async def delete_prefixnew(request_body: TokenRequest, user: dict = Depends(vali
 
     count = delete_allocation(experiment_id=exp)
 
-    if count != 1
+    if count < 1:
         raise HTTPException(status_code=404, detail="No prefix is allocated to your experiment")
     
     return {"count": count}
