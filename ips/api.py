@@ -524,13 +524,13 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
         data = validate_token(token)
         exp = data['sub']
         user = data['act']['sub']
-        print (user)
-        print (exp)
-        logger.info(data)
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Experiment token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid experiment token")
+
+    logger.info(f"should get the prefix for user {user} and its experiment {experiment}")
+    
 
     # if exp not in db['cluster']['allocated'].keys():
     #     try:
