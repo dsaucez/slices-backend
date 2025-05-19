@@ -158,8 +158,8 @@ def allocate_ip_to_subnet(owner, experiment_id, duration=120, db_path='network_d
         expiration_time = allocation_time + timedelta(minutes=duration)
 
         # Format timestamps as string
-        allocation_time_str = allocation_time.strftime('%Y-%m-%d %H:%M:%S')
-        expiration_time_str = expiration_time.strftime('%Y-%m-%d %H:%M:%S')
+        allocation_time_str = allocation_time.strftime('%Y-%m-%d %H:%M:%S') + 'Z'
+        expiration_time_str = expiration_time.strftime('%Y-%m-%d %H:%M:%S') + 'Z'
 
 
         # Now insert the allocation
