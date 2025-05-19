@@ -27,7 +27,7 @@ import re
 
 import pos
 
-from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable, delete_allocation
+from allocations import create_db, get_allocation, AllocationError, NoIPAvailable, NoPrefixAvailable, delete_allocation, remove_expired_allocations
 
 # ===== CORS 
 from fastapi.middleware.cors import CORSMiddleware
@@ -533,6 +533,8 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid experiment token")
 
+    remove_expired_allocations()
+    
     duration = 1
     try:
         allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
