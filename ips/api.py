@@ -517,6 +517,42 @@ class TokenRequest(BaseModel):
             }
         }
 
+@app.post("/prefixnew/")
+async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token)):
+    token = request_body.token
+    try:
+        data = validate_token(token)
+        exp = data['sub']
+        print (data)
+        logger.info(data)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Experiment token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid experiment token")
+
+    # if exp not in db['cluster']['allocated'].keys():
+    #     try:
+    #         p = db['cluster']['subnets'].pop()
+    #         db['cluster']['allocated'][exp] = p
+    #     except IndexError:
+    #         raise HTTPException(status_code=404, detail="No prefix is available")
+
+    #     try:
+    #         lb = db['metallb']['ips'].pop()
+    #         db['metallb']['allocated'][exp] = lb
+    #     except IndexError:
+    #         raise HTTPException(status_code=404, detail="No LB IP is available")    
+        
+
+    # else:
+    #     p = db['cluster']['allocated'][exp]
+    #     lb = db['metallb']['allocated'][exp]
+
+    return {
+        "subnet": p,
+        "lb": lb
+        }
+
 @app.post("/prefix/")
 async def post_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
