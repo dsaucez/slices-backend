@@ -534,7 +534,7 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
         raise HTTPException(status_code=401, detail="Invalid experiment token")
 
     remove_expired_allocations()
-    
+
     duration = 1
     try:
         allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
@@ -545,7 +545,7 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
     return {
         "subnet": allocation['prefix'],
         "lb": allocation['ip'],
-        "duration": duration
+        "expiration_time": allocation['expiration_time']
         }
 
 @app.post("/prefix/")

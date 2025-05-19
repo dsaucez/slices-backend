@@ -103,19 +103,19 @@ def get_allocation(owner, experiment_id, duration=120, db_path='network_data.db'
 
     try:
         cursor.execute('''
-            SELECT ip, prefix
+            SELECT ip, prefix, expiration_time, 
             FROM allocations
             WHERE experiment_id = ?
-        ''', (experiment_id,))
+        ''', (experiment_id))
 
         allocation = cursor.fetchone()
 
         if allocation:
-            ip, prefix = allocation
+            ip, prefix, expiration_time = allocation
         else:
-            ip, prefix = allocate_ip_to_subnet(owner=owner, experiment_id=experiment_id, duration=duration, db_path='network_data.db')
+            ip, prefix, expiration_time = allocate_ip_to_subnet(owner=owner, experiment_id=experiment_id, duration=duration, db_path='network_data.db')
 
-        return {"ip": ip, "prefix": prefix}
+        return {"ip": ip, "prefix": prefix, "expiration_time": expiration_time}
     except sqlite3.Error as e:
         logger.error(f"Error retrieving allocation for experiment_id '{experiment_id}': {e}")
     finally:
@@ -176,7 +176,7 @@ def allocate_ip_to_subnet(owner, experiment_id, duration=120, db_path='network_d
     finally:
         conn.close()
 
-    return (ip, prefix)
+    return (ip, prefix, expiration_time)
 
 
 def delete_allocation(experiment_id, db_path='network_data.db'):
