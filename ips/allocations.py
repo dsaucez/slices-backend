@@ -5,9 +5,6 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger("slices-backend")
 
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
-
 def create_allocations_table(conn):
     """Create the 'allocation' table in the SQLite database with automatic timestamp."""
     cursor = conn.cursor()
