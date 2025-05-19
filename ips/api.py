@@ -521,7 +521,7 @@ class TokenRequest(BaseModel):
             }
         }
 
-@app.post("/prefixnew/")
+@app.post("/prefix/")
 async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token)):
     token = request_body.token
     try:
@@ -535,7 +535,7 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
 
     remove_expired_allocations()
 
-    duration = 1
+    duration = 120
     try:
         allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
     except NoPrefixAvailable:
@@ -548,7 +548,7 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
         "expiration_time": allocation['expiration_time']
         }
 
-@app.post("/prefix/")
+@app.post("/prefixold/")
 async def post_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
     POST /prefix/ endpoint to retrieve the subnet and load balancer (LB) IP
@@ -635,7 +635,7 @@ async def post_prefix(request_body: TokenRequest, user: dict = Depends(validate_
         "lb": lb
         }
 
-@app.delete("/prefix/")
+@app.delete("/prefixold/")
 async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
     DELETE /prefix/ endpoint to release the subnet and load balancer (LB) IP
@@ -700,7 +700,7 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
             }
 
 
-@app.delete("/prefixnew/")
+@app.delete("/prefix/")
 async def delete_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token)):
     """
     DELETE /prefix/ endpoint to release the subnet and load balancer (LB) IP
