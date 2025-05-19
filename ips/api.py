@@ -535,7 +535,7 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
 
     remove_expired_allocations()
 
-    duration = 120
+    duration = 1
     try:
         allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
     except NoPrefixAvailable:
