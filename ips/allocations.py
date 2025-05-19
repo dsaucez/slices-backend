@@ -176,7 +176,7 @@ def allocate_ip_to_subnet(owner, experiment_id, duration=120, db_path='network_d
     finally:
         conn.close()
 
-    return (ip, prefix, expiration_time)
+    return (ip, prefix, expiration_time_str)
 
 
 def delete_allocation(experiment_id, db_path='network_data.db'):
