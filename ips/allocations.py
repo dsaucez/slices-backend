@@ -103,10 +103,10 @@ def get_allocation(owner, experiment_id, duration=120, db_path='network_data.db'
 
     try:
         cursor.execute('''
-            SELECT ip, prefix, expiration_time, 
+            SELECT ip, prefix, expiration_time 
             FROM allocations
             WHERE experiment_id = ?
-        ''', (experiment_id))
+        ''', (experiment_id,))
 
         allocation = cursor.fetchone()
 
