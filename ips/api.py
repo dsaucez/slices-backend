@@ -522,7 +522,7 @@ class TokenRequest(BaseModel):
         }
 
 @app.post("/prefix/")
-async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token)):
+async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token), duration: int = Query(default=120, description="Optional duration in minutes")):
     token = request_body.token
     try:
         data = validate_token(token)
@@ -535,7 +535,6 @@ async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(valida
 
     remove_expired_allocations()
 
-    duration = 1
     try:
         allocation = get_allocation(owner=user, experiment_id=exp, duration=duration)
     except NoPrefixAvailable:
