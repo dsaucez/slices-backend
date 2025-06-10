@@ -1,0 +1,3 @@
+#!/bin/bash
+source /opt/pos2/venv/bin/activate
+exec /opt/pos2/cli/src/cli.py "$@"
