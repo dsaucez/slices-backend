@@ -72,7 +72,7 @@ def new_blueprint(api_url: str, func):
 
 def _new_vm(area_id:int, flavor_name: str, password: str):
   my_vm = VmModel(mgmt_net="vlan69", password=password, flavor=flavors[flavor_name])
-  func = partial(new_vm, area=area_id, info=my_vm)
+  func = partial(new_vm, area_id=area_id, info=my_vm)
 
   blueprint_id = new_blueprint(api_url=api_url, func=func)
   return blueprint_id
