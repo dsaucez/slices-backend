@@ -22,6 +22,13 @@ flavors = {
 def get_flavors() -> dict[str, FlavorModel]:
     return flavors
 
+def pretty_print_flavors():
+    flavors = get_flavors()
+    print(f"{'Name':<10} {'vCPUs':<6} {'Memory(MB)':<12} {'Storage(GB)':<11}")
+    print("-" * 41)
+    for name, flavor in flavors.items():
+      print(f"{name:<10} {flavor.vcpu_count:<6} {flavor.memory_mb:<12} {flavor.storage_gb:<11}")
+
 def new_blueprint(api_url: str, func):
   task_id = func(api_url=api_url)
   blueprint_id = get_blueprint_id(api_url=api_url, task_id=task_id)   
@@ -77,9 +84,16 @@ def main():
       help="Create a new K8s cluster",
       description="Create a new Kubernetes cluster in the specified area."
   )
-  k8s_create_parser.add_argument("area_id", type=int, help="Area ID where the cluster will be created")
-  k8s_create_parser.add_argument("flavor_name", type=str, help="Flavor name for the master node")
+  k8s_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the cluster will be created")
+  k8s_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the master node")
   k8s_create_parser.add_argument("--password", type=str, default="password", help="Password for the cluster (default: password)")
+
+  k8s_kubeconfig_parser = k8s_subparsers.add_parser(
+      "kubeconfig",
+      help="Get kubeconfig for a K8s cluster",
+      description="Retrieve the kubeconfig for a given blueprint ID."
+  )
+  k8s_kubeconfig_parser.add_argument("--blueprint_id", type=str, required=True, help="Blueprint ID of the K8s cluster")
 
   # VM resource
   vm_parser = subparsers.add_parser(
@@ -94,9 +108,16 @@ def main():
       help="Create a new VM",
       description="Create a new Virtual Machine in the specified area."
   )
-  vm_create_parser.add_argument("area_id", type=int, help="Area ID where the VM will be created")
-  vm_create_parser.add_argument("flavor_name", type=str, help="Flavor name for the VM")
+  vm_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the VM will be created")
+  vm_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the VM")
   vm_create_parser.add_argument("--password", type=str, default="password", help="Password for the VM (default: password)")
+
+  vm_list_parser = vm_subparsers.add_parser(
+      "list",
+      help="List VM access details",
+      description="Get access details for a VM by blueprint ID."
+  )
+  vm_list_parser.add_argument("--blueprint_id", type=str, required=True, help="Blueprint ID of the VM")
 
   # Flavor resource
   flavor_parser = subparsers.add_parser(
@@ -117,15 +138,28 @@ def main():
   if args.resource == "k8s" and args.action == "create":
     blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
     print(blueprint_id)
+  elif args.resource == "k8s" and args.action == "kubeconfig":
+    kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
+    print(kubeconfig)
   elif args.resource == "vm" and args.action == "create":
     blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
     print(blueprint_id)
+  elif args.resource == "vm" and args.action == "list":
+    access_details = get_access_details(api_url=api_url, blueprint_id=args.blueprint_id)
+    if isinstance(access_details, list):
+      print(f"{'IP Address':<20} {'Username':<15} {'Password':<15} {'SSH Port':<8}")
+      print("-" * 60)
+      for detail in access_details:
+        print(f"{detail.ip_address:<20} {detail.username:<15} {detail.password:<15} {detail.ssh_port:<8}")
+    elif access_details:
+      print(f"{'IP Address':<20} {'Username':<15} {'Password':<15} {'SSH Port':<8}")
+      print("-" * 60)
+      print(f"{access_details.ip_address:<20} {access_details.username:<15} {access_details.password:<15} {access_details.ssh_port:<8}")
+    else:
+      print("No access details found for the given blueprint ID.")
   elif args.resource == "flavor" and args.action == "list":
-    flavors = get_flavors()
-    print(f"{'Name':<10} {'vCPUs':<6} {'Memory(MB)':<12} {'Storage(GB)':<11}")
-    print("-" * 41)
-    for name, flavor in flavors.items():
-      print(f"{name:<10} {flavor.vcpu_count:<6} {flavor.memory_mb:<12} {flavor.storage_gb:<11}")
+    pretty_print_flavors()
+
 
 if __name__ == '__main__':
    main()
