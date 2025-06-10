@@ -113,7 +113,7 @@ def main():
       help="Get kubeconfig for a K8s cluster",
       description="Retrieve the kubeconfig for a given blueprint ID."
   )
-  k8s_kubeconfig_parser.add_argument("blueprint_id", type=str, required=True, help="Blueprint ID of the K8s cluster")
+  k8s_kubeconfig_parser.add_argument("blueprint_id", type=str, help="Blueprint ID of the K8s cluster")
 
   # VM resource
   vm_parser = subparsers.add_parser(
@@ -138,7 +138,7 @@ def main():
       help="List access information to VMs",
       description="List Virtual Machine access information"
   )
-  vm_list_parser.add_argument("blueprint_id", type=str, required=True, help="Blueprint ID of the VM")
+  vm_list_parser.add_argument("blueprint_id", type=str, help="Blueprint ID of the VM")
 
 
 
