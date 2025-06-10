@@ -1,1 +1,1 @@
-from .models import HostAccessInfoModel, FlavorModel, VmModel
+from .models import HostAccessInfoModel, FlavorModel, VmModel, K8sAreaModel, K8sClusterModel

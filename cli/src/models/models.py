@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_serializer
-from typing import List, Union
+from typing import List, Union, Optional
 
 class HostAccessInfoModel(BaseModel):
     access_ip: str
@@ -30,3 +30,17 @@ class VmModel(BaseModel):
     version: str = Field("UBUNTU24")
     data_nets: List[str] = Field([])
     flavor: FlavorModel
+
+class K8sAreaModel(BaseModel):
+    area_id: int
+    is_master_area: bool = Field(True)
+    mgmt_net: str
+    additional_networks: List[str] = Field([])
+    load_balancer_pools_ips: List [str] = Field([])
+    worker_replicas: int = Field(1)
+    worker_flavors: FlavorModel
+
+class K8sClusterModel(BaseModel):
+    password: str = Field("password")
+    master_flavors: FlavorModel
+    areas: List[K8sAreaModel]

@@ -1,4 +1,5 @@
 from lib.vm import *
+from lib.k8s import *
 from models import HostAccessInfoModel, FlavorModel, VmModel
 
 api_url="http://nfvcl.sopnode.slices-ri.eu:5002"
@@ -17,7 +18,8 @@ flavors = {
 def get_flavors() -> dict[str, FlavorModel]:
     return flavors
 
-if __name__ == '__main__':
+
+def test():
   print (get_flavors())
 
   my_vm = VmModel(mgmt_net="vlan69", flavor=flavors["nano"])
@@ -33,3 +35,25 @@ if __name__ == '__main__':
 
   blueprint_id = "GMQEBH"
   print (get_kubeconfig(api_url=api_url, blueprint_id=blueprint_id))
+
+def main():
+   area = K8sAreaModel(
+    area_id=105,
+    is_master_area=True,
+    mgmt_net="vlan69",
+    additional_networks= [],
+    load_balancer_pools_ips= [],
+    worker_replicas= 1,
+    worker_flavors=flavors['xlarge']
+   )
+   cluster=K8sClusterModel(
+      password="password",
+      master_flavors=flavors['xlarge'],
+      areas=[area]
+   )
+   cl = new_cluster(api_url=api_url, info=cluster)
+
+   print (cl)
+
+if __name__ == '__main__':
+   main()
