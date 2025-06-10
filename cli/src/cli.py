@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from lib.vm import *
 from lib.k8s import *
 from lib.common import *
