@@ -1,6 +1,9 @@
 from lib.vm import *
 from lib.k8s import *
+from lib.common import *
+
 from models import HostAccessInfoModel, FlavorModel, VmModel
+from functools import partial
 
 api_url="http://nfvcl.sopnode.slices-ri.eu:5002"
 
@@ -18,6 +21,11 @@ flavors = {
 def get_flavors() -> dict[str, FlavorModel]:
     return flavors
 
+def new_blueprint(api_url: str, func):
+  task_id = func(api_url=api_url)
+  blueprint_id = get_blueprint_id(api_url=api_url, task_id=task_id)   
+
+  return blueprint_id
 
 def test():
   print (get_flavors())
@@ -37,23 +45,25 @@ def test():
   print (get_kubeconfig(api_url=api_url, blueprint_id=blueprint_id))
 
 def main():
-   area = K8sAreaModel(
-    area_id=105,
-    is_master_area=True,
-    mgmt_net="vlan69",
-    additional_networks= [],
-    load_balancer_pools_ips= [],
-    worker_replicas= 1,
-    worker_flavors=flavors['xlarge']
-   )
-   cluster=K8sClusterModel(
-      password="password",
-      master_flavors=flavors['xlarge'],
-      areas=[area]
-   )
-   cl = new_cluster(api_url=api_url, info=cluster)
+  area = K8sAreaModel(
+  area_id=105,
+  is_master_area=True,
+  mgmt_net="vlan69",
+  additional_networks= [],
+  load_balancer_pools_ips= [],
+  worker_replicas= 1,
+  worker_flavors=flavors['xlarge']
+  )
 
-   print (cl)
+  cluster=K8sClusterModel(
+    password="password",
+    master_flavors=flavors['xlarge'],
+    areas=[area]
+  )
+  cl = partial(new_cluster, info=cluster)
+
+  blueprint_id = new_blueprint(api_url=api_url, func=cl)
+  print (blueprint_id)
 
 if __name__ == '__main__':
    main()
