@@ -129,6 +129,7 @@ def main():
       description="Retrieve the kubeconfig for a given blueprint ID."
   )
   k8s_kubeconfig_parser.add_argument("blueprint_id", type=str, help="Blueprint ID of the K8s cluster")
+  k8s_kubeconfig_parser.add_argument("--save-to-file", type=str, help="If specified, save kubeconfig to this file instead of printing")
 
   # VM resource
   vm_parser = subparsers.add_parser(
@@ -179,7 +180,11 @@ def main():
       print(blueprint_id)
     elif args.action == "kubeconfig":
       kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
-      print(kubeconfig)
+      if args.save_to_file:
+        with open(args.save_to_file, "w") as f:
+          f.write(kubeconfig)
+      else:
+        print(kubeconfig)
   # VM
   elif args.resource == "vm":
     if args.action == "create":
