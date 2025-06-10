@@ -24,10 +24,24 @@ def get_flavors() -> dict[str, FlavorModel]:
 
 def pretty_print_flavors():
     flavors = get_flavors()
-    print(f"{'Name':<10} {'vCPUs':<6} {'Memory(MB)':<12} {'Storage(GB)':<11}")
-    print("-" * 41)
+
+    if not flavors:
+      print("No flavors found.")
+      return
+
+    # Table header
+    headers = ["Name", "vCPUs", "Memory(MB)", "Storage(GB)"]
+    row_format = "{:<10} {:<6} {:<12} {:<11}"
+    print(row_format.format(*headers))
+    print("-" * 39)
+
     for name, flavor in flavors.items():
-      print(f"{name:<10} {flavor.vcpu_count:<6} {flavor.memory_mb:<12} {flavor.storage_gb:<11}")
+      print(row_format.format(
+            name,
+            flavor.vcpu_count,
+            flavor.memory_mb,
+            flavor.storage_gb
+          ))
 
 def pretty_print_access_details(access_details: dict[str, HostAccessInfoModel]) -> None:
     if not access_details:
@@ -131,7 +145,6 @@ def main():
   vm_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the VM will be created")
   vm_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the VM")
   vm_create_parser.add_argument("--password", type=str, default="password", help="Password for the VM (default: password)")
-
 
   vm_list_parser = vm_subparsers.add_parser(
       "list",
