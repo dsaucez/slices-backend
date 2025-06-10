@@ -60,9 +60,12 @@ def main():
     master_flavors=flavors['xlarge'],
     areas=[area]
   )
-  cl = partial(new_cluster, info=cluster)
+  func = partial(new_cluster, info=cluster)
 
-  blueprint_id = new_blueprint(api_url=api_url, func=cl)
+  my_vm = VmModel(mgmt_net="vlan69", flavor=flavors["nano"])
+  func = partial(new_vm, area=105, info=my_vm)
+
+  blueprint_id = new_blueprint(api_url=api_url, func=func)
   print (blueprint_id)
 
 if __name__ == '__main__':

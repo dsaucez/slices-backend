@@ -1,3 +1,4 @@
+from models import HostAccessInfoModel
 import requests
 import time
 
@@ -21,3 +22,20 @@ def get_blueprint_details(api_url: str, blueprint_id: str):
   response = requests.get(url)
   response.raise_for_status()
   return response.json()
+
+
+def get_access_details(api_url: str, blueprint_id: str) -> dict[str, HostAccessInfoModel]:
+    details = get_blueprint_details(api_url=api_url, blueprint_id=blueprint_id)
+
+    hosts = {}
+    for key, obj in details['registered_resources'].items():
+        if obj['type'] == "nfvcl_core_models.resources.VmResource":
+            vm = obj['value']
+
+            hosts[vm['name']] = HostAccessInfoModel(
+                access_ip=vm['access_ip'],
+                name=vm['name'],
+                username=vm['username'],
+                password=vm['password']
+            )
+    return hosts

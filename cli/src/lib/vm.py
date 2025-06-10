@@ -1,6 +1,6 @@
 import requests
 import time
-from models import HostAccessInfoModel, VmModel
+from models import  VmModel
 from .common import get_blueprint_details
 
 
@@ -21,22 +21,3 @@ def new_vm(api_url: str, area: int, info: VmModel):
         raise RuntimeError("No task_id found in response.")
 
     return task_id
-
-
-def get_access_details(api_url: str, blueprint_id: str) -> dict[str, HostAccessInfoModel]:
-    details = get_blueprint_details(api_url=api_url, blueprint_id=blueprint_id)
-
-    hosts = {}
-    for key, obj in details['registered_resources'].items():
-        if obj['type'] == "nfvcl_core_models.resources.VmResource":
-            vm = obj['value']
-
-            hosts[vm['name']] = HostAccessInfoModel(
-                access_ip=vm['access_ip'],
-                name=vm['name'],
-                username=vm['username'],
-                password=vm['password']
-            )
-    return hosts
-
-
