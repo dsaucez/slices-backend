@@ -10,15 +10,14 @@ def new_cluster(api_url: str, info: K8sClusterModel):
     }
     payload = info.model_dump()
 
-    return payload
-    # response = requests.post(url, headers=headers, json=payload)
-    # response.raise_for_status()
-    # task_id = response.json().get("task_id")
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    task_id = response.json().get("task_id")
 
-    # if not task_id:
-    #     raise RuntimeError("No task_id found in response.")
+    if not task_id:
+        raise RuntimeError("No task_id found in response.")
 
-    # return task_id
+    return task_id
 
 def get_kubeconfig(api_url: str, blueprint_id: str) -> str:
     url = f"{api_url}/nfvcl/v2/api/blue/k8s/root_kubeconfig?blue_id={blueprint_id}"
