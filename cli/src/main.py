@@ -113,7 +113,7 @@ def main():
       help="Get kubeconfig for a K8s cluster",
       description="Retrieve the kubeconfig for a given blueprint ID."
   )
-  k8s_kubeconfig_parser.add_argument("--blueprint_id", type=str, required=True, help="Blueprint ID of the K8s cluster")
+  k8s_kubeconfig_parser.add_argument("blueprint_id", type=str, required=True, help="Blueprint ID of the K8s cluster")
 
   # VM resource
   vm_parser = subparsers.add_parser(
@@ -131,6 +131,16 @@ def main():
   vm_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the VM will be created")
   vm_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the VM")
   vm_create_parser.add_argument("--password", type=str, default="password", help="Password for the VM (default: password)")
+
+
+  vm_list_parser = vm_subparsers.add_parser(
+      "list",
+      help="List access information to VMs",
+      description="List Virtual Machine access information"
+  )
+  vm_list_parser.add_argument("blueprint_id", type=str, required=True, help="Blueprint ID of the VM")
+
+
 
   # Flavor resource
   flavor_parser = subparsers.add_parser(
