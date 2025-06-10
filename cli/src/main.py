@@ -29,6 +29,26 @@ def pretty_print_flavors():
     for name, flavor in flavors.items():
       print(f"{name:<10} {flavor.vcpu_count:<6} {flavor.memory_mb:<12} {flavor.storage_gb:<11}")
 
+def pretty_print_access_details(access_details: dict[str, HostAccessInfoModel]) -> None:
+    if not access_details:
+        print("No access details found.")
+        return
+
+    # Table header
+    headers = ["Host", "Access IP", "Username", "Password"]
+    row_format = "{:<25} {:<20} {:<15} {:<15}"
+    print(row_format.format(*headers))
+    print("-" * 75)
+
+    # Table rows
+    for name, info in access_details.items():
+        print(row_format.format(
+            info.name,
+            info.access_ip,
+            info.username,
+            info.password
+        ))
+
 def new_blueprint(api_url: str, func):
   task_id = func(api_url=api_url)
   blueprint_id = get_blueprint_id(api_url=api_url, task_id=task_id)   
@@ -112,13 +132,6 @@ def main():
   vm_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the VM")
   vm_create_parser.add_argument("--password", type=str, default="password", help="Password for the VM (default: password)")
 
-  vm_list_parser = vm_subparsers.add_parser(
-      "list",
-      help="List VM access details",
-      description="Get access details for a VM by blueprint ID."
-  )
-  vm_list_parser.add_argument("--blueprint_id", type=str, required=True, help="Blueprint ID of the VM")
-
   # Flavor resource
   flavor_parser = subparsers.add_parser(
       "flavor",
@@ -135,31 +148,26 @@ def main():
 
   args = parser.parse_args()
 
-  if args.resource == "k8s" and args.action == "create":
-    blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
-    print(blueprint_id)
-  elif args.resource == "k8s" and args.action == "kubeconfig":
-    kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
-    print(kubeconfig)
-  elif args.resource == "vm" and args.action == "create":
-    blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
-    print(blueprint_id)
-  elif args.resource == "vm" and args.action == "list":
-    access_details = get_access_details(api_url=api_url, blueprint_id=args.blueprint_id)
-    if isinstance(access_details, list):
-      print(f"{'IP Address':<20} {'Username':<15} {'Password':<15} {'SSH Port':<8}")
-      print("-" * 60)
-      for detail in access_details:
-        print(f"{detail.ip_address:<20} {detail.username:<15} {detail.password:<15} {detail.ssh_port:<8}")
-    elif access_details:
-      print(f"{'IP Address':<20} {'Username':<15} {'Password':<15} {'SSH Port':<8}")
-      print("-" * 60)
-      print(f"{access_details.ip_address:<20} {access_details.username:<15} {access_details.password:<15} {access_details.ssh_port:<8}")
-    else:
-      print("No access details found for the given blueprint ID.")
-  elif args.resource == "flavor" and args.action == "list":
-    pretty_print_flavors()
-
+  # k8s
+  if args.resource == "k8s":
+    if args.action == "create":
+      blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
+      print(blueprint_id)
+    elif args.action == "kubeconfig":
+      kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
+      print(kubeconfig)
+  # VM
+  elif args.resource == "vm":
+    if args.action == "create":
+      blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
+      print(blueprint_id)
+    elif args.action == "list":
+      access_details = get_access_details(api_url=api_url, blueprint_id=args.blueprint_id)
+      pretty_print_access_details(access_details=access_details)
+  # Flavor
+  elif args.resource == "flavor":
+    if args.action == "list":
+      pretty_print_flavors()
 
 if __name__ == '__main__':
    main()
