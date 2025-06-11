@@ -212,7 +212,7 @@ def main():
     # You may want to resolve resource_name to an IP here, for now assume it's an IP or hostname
 
     connect_via_jump(
-      jump_host='duckburg.net.in.tum.de' if args.proxy_username is not None else None
+      jump_host='duckburg.net.in.tum.de' if args.proxy_username is not None else None,
       jump_port=10022,
       jump_user=args.proxy_username,
       target_host=args.resource_name,
