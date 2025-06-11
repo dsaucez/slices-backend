@@ -41,6 +41,8 @@ class K8sAreaModel(BaseModel):
     worker_flavors: FlavorModel
 
 class K8sClusterModel(BaseModel):
+    install_plugins: bool = Field(True)
+    cni: str = Field("calico", pattern="^(cni|calico)$")
     password: str = Field("password")
     master_flavors: FlavorModel
     areas: List[K8sAreaModel]
