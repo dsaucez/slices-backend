@@ -2,6 +2,7 @@
 from lib.vm import *
 from lib.k8s import *
 from lib.common import *
+from lib.ssh import connect_via_jump
 
 from models import HostAccessInfoModel, FlavorModel, VmModel
 from functools import partial
@@ -129,7 +130,7 @@ def main():
       description="Retrieve the kubeconfig for a given blueprint ID."
   )
   k8s_kubeconfig_parser.add_argument("blueprint_id", type=str, help="Blueprint ID of the K8s cluster")
-  k8s_kubeconfig_parser.add_argument("--save-to-file", type=str, help="If specified, save kubeconfig to this file instead of printing")
+  k8s_kubeconfig_parser.add_argument("--save-to-file", type=str, help="If specified, save kubeconfig to this file instead of printing it to stdout")
 
   # VM resource
   vm_parser = subparsers.add_parser(
@@ -155,8 +156,6 @@ def main():
   )
   vm_list_parser.add_argument("blueprint_id", type=str, help="Blueprint ID of the VM")
 
-
-
   # Flavor resource
   flavor_parser = subparsers.add_parser(
       "flavor",
@@ -170,6 +169,17 @@ def main():
       help="List available flavors",
       description="List all available flavors in a table."
   )
+
+  # SSH resource
+  ssh_parser = subparsers.add_parser(
+      "ssh",
+      help="SSH into a resource",
+      description="SSH into a resource using username, password, and optional proxy."
+  )
+  ssh_parser.add_argument("-u", "--username", required=True, help="Username for SSH")
+  ssh_parser.add_argument("-p", "--password", required=True, help="Password for SSH")
+  ssh_parser.add_argument("resource_name", help="Name of the resource to SSH into")
+  ssh_parser.add_argument("--proxy", dest="proxy_username", help="Proxy username (jump host)")
 
   args = parser.parse_args()
 
@@ -197,6 +207,19 @@ def main():
   elif args.resource == "flavor":
     if args.action == "list":
       pretty_print_flavors()
+  # SSH
+  elif args.resource == "ssh":
+    # You may want to resolve resource_name to an IP here, for now assume it's an IP or hostname
+
+    connect_via_jump(
+      jump_host='duckburg.net.in.tum.de' if args.proxy_username is not None else None
+      jump_port=10022,
+      jump_user=args.proxy_username,
+      target_host=args.resource_name,
+      target_port=22,
+      target_user=args.username,
+      target_password=args.resource_name
+    )
 
 if __name__ == '__main__':
    main()
