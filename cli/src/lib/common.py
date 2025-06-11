@@ -1,6 +1,7 @@
 from models import HostAccessInfoModel
 import requests
 import time
+import sys
 
 def get_blueprint_id(api_url, task_id):
     status_url = f"{api_url}/v2/utils/get_task_status?task_id={task_id}"
@@ -11,9 +12,9 @@ def get_blueprint_id(api_url, task_id):
         status_data = status_response.json()
         if status_data.get("status") == "done":
             blueprint_id = status_data.get("result")
-            print ()
+            print (file=sys.stderr)
             return blueprint_id
-        print('.', end="", flush=True)
+        print('.', end="", file=sys.stderr, flush=True)
         time.sleep(1)  # wait before polling again
 
 
