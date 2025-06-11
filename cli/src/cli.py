@@ -6,6 +6,8 @@ from lib.common import *
 from models import HostAccessInfoModel, FlavorModel, VmModel
 from functools import partial
 import argparse
+import ipaddress
+
 
 api_url="http://nfvcl.sopnode.slices-ri.eu:5002"
 
@@ -79,12 +81,15 @@ def _new_vm(area_id:int, flavor_name: str, password: str):
   return blueprint_id
    
 def _new_single_cluster(area_id: int, flavor_name: str, password: str):
+  start_ip = ipaddress.IPv4Address("192.168.234.100")
+  ip_list = [str(start_ip + i) for i in range(100)]
+  
   area = K8sAreaModel(
     area_id=area_id,
     is_master_area=True,
     mgmt_net="vlan69",
     additional_networks= [],
-    load_balancer_pools_ips= ['192.0.2.10', '192.0.2.11', '192.0.2.12', '192.0.2.13', '192.0.2.14', '192.0.2.15', '192.0.2.16', '192.0.2.17', '192.0.2.18'],
+    load_balancer_pools_ips= ip_list,
     worker_replicas= 1,
     worker_flavors=flavors['xlarge']
   )
