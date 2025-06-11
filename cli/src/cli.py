@@ -84,7 +84,7 @@ def _new_single_cluster(area_id: int, flavor_name: str, password: str):
     is_master_area=True,
     mgmt_net="vlan69",
     additional_networks= [],
-    load_balancer_pools_ips= [],
+    load_balancer_pools_ips= ['192.0.2.10', '192.0.2.11', '192.0.2.12', '192.0.2.13', '192.0.2.14', '192.0.2.15', '192.0.2.16', '192.0.2.17', '192.0.2.18'],
     worker_replicas= 1,
     worker_flavors=flavors['xlarge']
   )
