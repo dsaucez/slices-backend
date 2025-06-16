@@ -529,7 +529,7 @@ async def get_prefix(request_body: TokenRequest, user: dict = Depends(validate_t
 
 
 @app.post("/prefix/")
-async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token), duration: int = Query(default=120, description="Optional duration in minutes")):
+async def post_prefixnew(request_body: TokenRequest, user: dict = Depends(validate_token), duration: int = Query(default=1440, description="Optional duration in minutes")):
     token = request_body.token
     try:
         data = validate_token(token)
