@@ -19,7 +19,7 @@ def genIPs(gcn):
   base_ip = net.ip + 2
   hostInterface = gcn['multus']['hostInterface']
 
-  prefixlen = 21  # XXX: DSA: should not be hardcoded
+  prefixlen = 23  # XXX: DSA: should not be hardcoded
 
   ips = {
     "amf": {
