@@ -49,6 +49,6 @@ def get_access_details(api_url: str, blueprint_id: str) -> dict[str, HostAccessI
                 name=vm['name'],
                 username=vm['username'],
                 password=vm['password'],
-                mac=get_mac(network_interfaces=json.load(vm['network_interfaces']), ip=vm['access_ip'])
+                mac=get_mac(network_interfaces=vm['network_interfaces'], ip=vm['access_ip'])
             )
     return hosts
