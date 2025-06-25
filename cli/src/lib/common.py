@@ -2,6 +2,7 @@ from models import HostAccessInfoModel
 import requests
 import time
 import sys
+import json
 
 def get_blueprint_id(api_url, task_id):
     status_url = f"{api_url}/v2/utils/get_task_status?task_id={task_id}"
@@ -25,6 +26,16 @@ def get_blueprint_details(api_url: str, blueprint_id: str):
   return response.json()
 
 
+def get_mac(network_interfaces, ip):
+  mac = next(
+      (iface["fixed"]["mac"]
+       for interfaces in network_interfaces.values()
+       for iface in interfaces
+       if iface.get("fixed", {}).get("ip") == ip),
+      None  # default if not found
+  )
+  return mac
+
 def get_access_details(api_url: str, blueprint_id: str) -> dict[str, HostAccessInfoModel]:
     details = get_blueprint_details(api_url=api_url, blueprint_id=blueprint_id)
 
@@ -37,6 +48,7 @@ def get_access_details(api_url: str, blueprint_id: str) -> dict[str, HostAccessI
                 access_ip=vm['access_ip'],
                 name=vm['name'],
                 username=vm['username'],
-                password=vm['password']
+                password=vm['password'],
+                mac=get_mac(network_interfaces=json.load(vm['network_interfaces']), ip=vm['access_ip'])
             )
     return hosts
