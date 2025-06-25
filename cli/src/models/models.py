@@ -6,6 +6,7 @@ class HostAccessInfoModel(BaseModel):
     name: str
     username: str
     password: str
+    mac: str
 
 class FlavorModel(BaseModel):
     vcpu_count: Union[str, int]
