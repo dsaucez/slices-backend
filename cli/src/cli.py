@@ -52,16 +52,17 @@ def pretty_print_access_details(access_details: dict[str, HostAccessInfoModel]) 
         return
 
     # Table header
-    headers = ["Host", "Access IP", "Username", "Password"]
-    row_format = "{:<25} {:<20} {:<15} {:<15}"
+    headers = ["Host", "Access IP", "mac", "Username", "Password"]
+    row_format = "{:<25} {:<20} {:<20} {:<15} {:<15}"
     print(row_format.format(*headers))
-    print("-" * 75)
+    print("-" * 95)
 
     # Table rows
     for name, info in access_details.items():
         print(row_format.format(
             info.name,
             info.access_ip,
+            info.mac,
             info.username,
             info.password
         ))
