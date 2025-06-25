@@ -73,21 +73,21 @@ def new_blueprint(api_url: str, func):
   return blueprint_id
 
 
-def _new_vm(area_id:int, flavor_name: str, password: str):
-  my_vm = VmModel(mgmt_net="vlan69", password=password, flavor=flavors[flavor_name])
+def _new_vm(area_id:int, flavor_name: str, password: str, mgmt_net="vmbr0"):
+  my_vm = VmModel(mgmt_net=mgmt_net, password=password, flavor=flavors[flavor_name])
   func = partial(new_vm, area_id=area_id, info=my_vm)
 
   blueprint_id = new_blueprint(api_url=api_url, func=func)
   return blueprint_id
    
-def _new_single_cluster(area_id: int, flavor_name: str, password: str):
+def _new_single_cluster(area_id: int, flavor_name: str, password: str, mgmt_net="vmbr0"):
   start_ip = ipaddress.IPv4Address("192.168.234.100")
   ip_list = [str(start_ip + i) for i in range(100)]
   
   area = K8sAreaModel(
     area_id=area_id,
     is_master_area=True,
-    mgmt_net="vlan69",
+    mgmt_net=mgmt_net,
     additional_networks= [],
     load_balancer_pools_ips= ip_list,
     worker_replicas= 1,
@@ -127,6 +127,8 @@ def main():
   k8s_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the cluster will be created")
   k8s_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the master node")
   k8s_create_parser.add_argument("--password", type=str, default="password", help="Password for the cluster (default: password)")
+  k8s_create_parser.add_argument("--mgmt-net", type=str, default="vmbr0", help="Management network")
+
 
   k8s_kubeconfig_parser = k8s_subparsers.add_parser(
       "kubeconfig",
@@ -149,9 +151,10 @@ def main():
       help="Create a new VM",
       description="Create a new Virtual Machine in the specified area."
   )
-  vm_create_parser.add_argument("--area_id", type=int, required=True, help="Area ID where the VM will be created")
-  vm_create_parser.add_argument("--flavor_name", type=str, required=True, help="Flavor name for the VM")
+  vm_create_parser.add_argument("--area-id", type=int, required=True, help="Area ID where the VM will be created")
+  vm_create_parser.add_argument("--flavor-name", type=str, required=True, help="Flavor name for the VM")
   vm_create_parser.add_argument("--password", type=str, default="password", help="Password for the VM (default: password)")
+  vm_create_parser.add_argument("--mgmt-net", type=str, default="vmbr0", help="Management network")
 
   vm_list_parser = vm_subparsers.add_parser(
       "list",
@@ -181,7 +184,7 @@ def main():
   # k8s
   if args.resource == "k8s":
     if args.action == "create":
-      blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
+      blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password, mgmt_net=args.mgmt_net)
       print(blueprint_id)
     elif args.action == "kubeconfig":
       kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
@@ -193,7 +196,7 @@ def main():
   # VM
   elif args.resource == "vm":
     if args.action == "create":
-      blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password)
+      blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password, mgmt_net=args.mgmt_net)
       print(blueprint_id)
     elif args.action == "list":
       access_details = get_access_details(api_url=api_url, blueprint_id=args.blueprint_id)
