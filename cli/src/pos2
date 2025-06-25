@@ -1,3 +1,4 @@
 #!/bin/bash
+export SLICES_JWT=$(slices auth get-for-audience http://localhost:8123/synchronize_ssh_keys)
 source /opt/pos2/venv/bin/activate
 exec /opt/pos2/cli/src/cli.py "$@"

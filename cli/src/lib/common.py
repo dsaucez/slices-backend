@@ -3,6 +3,20 @@ import requests
 import time
 import sys
 import json
+import os
+
+
+def register_vm(blueprint_id: str):
+
+    register_url = f"http://localhost:8123/register_vm/{blueprint_id}"
+    jwt = os.getenv("SLICES_JWT")
+
+    headers = {
+        "Authorization": f"Bearer {jwt}"
+    }
+    response = requests.post(register_url, headers=headers)
+    
+    return response.status_code
 
 def get_blueprint_id(api_url, task_id):
     status_url = f"{api_url}/v2/utils/get_task_status?task_id={task_id}"
