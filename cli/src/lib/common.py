@@ -16,7 +16,7 @@ def register_vm(blueprint_id: str):
     }
     response = requests.post(register_url, headers=headers)
     
-    return response.status_code
+    return response
 
 def get_blueprint_id(api_url, task_id):
     status_url = f"{api_url}/v2/utils/get_task_status?task_id={task_id}"
