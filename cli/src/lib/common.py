@@ -15,8 +15,9 @@ def register_vm(blueprint_id: str):
         "Authorization": f"Bearer {jwt}"
     }
     response = requests.post(register_url, headers=headers)
-    
-    return response
+    response.raise_for_status()
+
+    return response.json()
 
 def get_blueprint_id(api_url, task_id):
     status_url = f"{api_url}/v2/utils/get_task_status?task_id={task_id}"
