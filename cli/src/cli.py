@@ -186,8 +186,8 @@ def main():
   if args.resource == "k8s":
     if args.action == "create":
       blueprint_id = _new_single_cluster(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password, mgmt_net=args.mgmt_net)
-      register_vm(blueprint_id=blueprint_id)
-      print(blueprint_id)
+      result = register_vm(blueprint_id=blueprint_id)
+      print(result)
     elif args.action == "kubeconfig":
       kubeconfig = get_kubeconfig(api_url=api_url, blueprint_id=args.blueprint_id)
       if args.save_to_file:
@@ -200,7 +200,6 @@ def main():
     if args.action == "create":
       blueprint_id = _new_vm(area_id=args.area_id, flavor_name=args.flavor_name, password=args.password, mgmt_net=args.mgmt_net)
       result = register_vm(blueprint_id=blueprint_id)
-
       print(result)
     elif args.action == "list":
       access_details = get_access_details(api_url=api_url, blueprint_id=args.blueprint_id)
